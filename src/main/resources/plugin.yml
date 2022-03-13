@@ -1,20 +1,11 @@
 name: mcMMO
 version: ${project.version}
-description: >
-  The goal of mcMMO is to take core Minecraft game mechanics and expand them into
-  add an extensive and quality RPG experience. Everything in mcMMO has been carefully
-  thought out and is constantly being improved upon. Currently, mcMMO adds thirteen
-  unique skills to train and level in. Each of these skills is highly customizable
-  through our configuration files, allowing server admins to tweak mcMMO to best suit
-  the needs of his or her server. Know that the mcMMO team is dedicated to providing
-  an ever-evolving experience, and that we carefully read all feedback and bug reports
-  in order to evaluate and balance the mechanics of mcMMO in every update.
-
+description: mcMMO Fork for the McHaven Network
 author: nossr50
-authors: [GJ, NuclearW, bm01, Glitchfinder, TfT_02, t00thpick1, Riking, electronicboy, kashike]
+authors: [ GJ, NuclearW, bm01, Glitchfinder, TfT_02, t00thpick1, Riking, electronicboy, kashike, AspyTheAussie ]
 website: https://www.mcmmo.org
 main: com.gmail.nossr50.mcMMO
-softdepend: [WorldGuard, CombatTag, HealthBar]
+softdepend: [ WorldGuard, CombatTag, HealthBar ]
 load: POSTWORLD
 api-version: 1.13
 
@@ -25,14 +16,14 @@ commands:
     mmocompat:
         description: Information about the server and whether or not its considered fully compatible or running in compatibility mode
     mmodebug:
-        aliases: [mcmmodebugmode]
+        aliases: [ mcmmodebugmode ]
         description: Toggles a debug mode which will print useful information to chat
     mmoinfo:
-        aliases: [mcinfo]
+        aliases: [ mcinfo ]
         description: Info pages for mcMMO
         permission: mcmmo.commands.mmoinfo
     xprate:
-        aliases: [mcxprate]
+        aliases: [ mcxprate ]
         description: Modify the xp rate or start an event
         permission: mcmmo.commands.xprate
     mcmmo:
@@ -58,7 +49,7 @@ commands:
         permission: mcmmo.commands.mcrefresh
     mccooldown:
         description: Show the cooldowns on all your mcMMO abilities
-        aliases: [mccooldowns]
+        aliases: [ mccooldowns ]
         permission: mcmmo.commands.mccooldown
     mcchatspy:
         description: Toggle mcMMO Party Chat spying on/off
@@ -70,7 +61,7 @@ commands:
         description: Import mod config files
         permission: mcmmo.commands.mcimport
     mcstats:
-        aliases: [stats]
+        aliases: [ stats ]
         description: Shows your mcMMO stats and xp
         permission: mcmmo.commands.mcstats
     mcremove:
@@ -95,7 +86,7 @@ commands:
         description: Convert between different database and formula types
         permission: mcmmo.commands.mcconvert
     partychat:
-        aliases: [pc, p]
+        aliases: [ pc, p ]
         description: Toggle Party chat or send party chat messages
         permission: mcmmo.chat.partychat
     skillreset:
@@ -147,38 +138,38 @@ commands:
         description: Detailed mcMMO skill info
         permission: mcmmo.commands.salvage
     adminchat:
-        aliases: [ac, a]
+        aliases: [ ac, a ]
         description: Toggle Admin chat or send admin chat messages
         permission: mcmmo.chat.adminchat
     mcpurge:
         description: Purge users with 0 powerlevel and/or who haven't connected in several months from the server DB.
         permission: mcmmo.commands.mcpurge
     hardcore:
-        aliases: [mchardcore]
+        aliases: [ mchardcore ]
         description: Modify the mcMMO hardcore percentage or toggle hardcore mode on/off
         permission: mcmmo.commands.hardcore
     vampirism:
-        aliases: [mcvampirism]
+        aliases: [ mcvampirism ]
         description: Modify the mcMMO vampirism percentage or toggle vampirism mode on/off
         permission: mcmmo.commands.vampirism
     mcnotify:
-        aliases: [notify]
+        aliases: [ notify ]
         description: Toggle mcMMO abilities chat display notifications on/off
         permission: mcmmo.commands.mcnotify
     mhd:
         description: Sets all players mob health settings to default
         permission: mcmmo.commands.mhd
     mcscoreboard:
-        aliases: [mcsb]
+        aliases: [ mcsb ]
         description: Manage your mcMMO Scoreboard
         permission: mcmmo.commands.mcscoreboard
     #mcfools:
     crafting:
-        aliases: [macho, jumping, throwing, wrecking, walking, swimming, falling, climbing, flying, diving, piggy]
+        aliases: [ macho, jumping, throwing, wrecking, walking, swimming, falling, climbing, flying, diving, piggy ]
         description: Deploy jokes
         permission: mcmmo.commands.mcfools
     mcmmoreloadlocale:
-        aliases: [mcreloadlocale]
+        aliases: [ mcreloadlocale ]
         description: Reloads locale
         permission: mcmmo.commands.reloadlocale
 permissions:
@@ -1301,7 +1292,7 @@ permissions:
         children:
             mcmmo.chat.partychat: true
             mcmmo.commands.defaults: true
-            mcmmo.motd: true 
+            mcmmo.motd: true
             mcmmo.skills.all: true
             mcmmo.chat.colors: true
     mcmmo.defaultsop:
@@ -1340,7 +1331,7 @@ permissions:
         default: false
         description: implies access to all mcmmo perks
         children:
-            mcmmo.perks.all: true 
+            mcmmo.perks.all: true
     mcmmo.perks.all:
         default: false
         description: implies access to all mcmmo perks
@@ -2096,7 +2087,7 @@ permissions:
         default: false
         description: Implies all mcmmo.tools permissions.
         children:
-            mcmmo.tools.all: true 
+            mcmmo.tools.all: true
     mcmmo.tools.all:
         default: false
         description: Implies all mcmmo.tools permissions.

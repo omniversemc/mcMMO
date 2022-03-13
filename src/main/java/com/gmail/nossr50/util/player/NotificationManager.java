@@ -30,13 +30,13 @@ public class NotificationManager {
     /**
      * Sends players notifications from mcMMO
      * Does so by sending out an event so other plugins can cancel it
-     * @param player target player
+     *
+     * @param player           target player
      * @param notificationType notifications defined type
-     * @param key the locale key for the notifications defined message
+     * @param key              the locale key for the notifications defined message
      */
-    public static void sendPlayerInformation(Player player, NotificationType notificationType, String key)
-    {
-        if(UserManager.getPlayer(player) == null || !UserManager.getPlayer(player).useChatNotifications())
+    public static void sendPlayerInformation(Player player, NotificationType notificationType, String key) {
+        if (UserManager.getPlayer(player) == null || !UserManager.getPlayer(player).useChatNotifications())
             return;
 
         McMMOMessageType destination = AdvancedConfig.getInstance().doesNotificationUseActionBar(notificationType) ? McMMOMessageType.ACTION_BAR : McMMOMessageType.SYSTEM;
@@ -48,9 +48,8 @@ public class NotificationManager {
     }
 
 
-    public static boolean doesPlayerUseNotifications(Player player)
-    {
-        if(UserManager.getPlayer(player) == null)
+    public static boolean doesPlayerUseNotifications(Player player) {
+        if (UserManager.getPlayer(player) == null)
             return false;
         else
             return UserManager.getPlayer(player).useChatNotifications();
@@ -60,28 +59,26 @@ public class NotificationManager {
      * Sends players notifications from mcMMO
      * This does this by sending out an event so other plugins can cancel it
      * This event in particular is provided with a source player, and players near the source player are sent the information
-     * @param targetPlayer the recipient player for this message
+     *
+     * @param targetPlayer     the recipient player for this message
      * @param notificationType type of notification
-     * @param key Locale Key for the string to use with this event
-     * @param values values to be injected into the locale string
+     * @param key              Locale Key for the string to use with this event
+     * @param values           values to be injected into the locale string
      */
-    public static void sendNearbyPlayersInformation(Player targetPlayer, NotificationType notificationType, String key, String... values)
-    {
+    public static void sendNearbyPlayersInformation(Player targetPlayer, NotificationType notificationType, String key, String... values) {
         sendPlayerInformation(targetPlayer, notificationType, key, values);
     }
 
-    public static void sendPlayerInformationChatOnly(Player player, String key, String... values)
-    {
-        if(UserManager.getPlayer(player) == null || !UserManager.getPlayer(player).useChatNotifications())
+    public static void sendPlayerInformationChatOnly(Player player, String key, String... values) {
+        if (UserManager.getPlayer(player) == null || !UserManager.getPlayer(player).useChatNotifications())
             return;
 
         String preColoredString = LocaleLoader.getString(key, (Object[]) values);
         player.sendMessage(preColoredString);
     }
 
-    public static void sendPlayerInformationChatOnlyPrefixed(Player player, String key, String... values)
-    {
-        if(UserManager.getPlayer(player) == null || !UserManager.getPlayer(player).useChatNotifications())
+    public static void sendPlayerInformationChatOnlyPrefixed(Player player, String key, String... values) {
+        if (UserManager.getPlayer(player) == null || !UserManager.getPlayer(player).useChatNotifications())
             return;
 
         String preColoredString = LocaleLoader.getString(key, (Object[]) values);
@@ -89,9 +86,8 @@ public class NotificationManager {
         player.sendMessage(prefixFormattedMessage);
     }
 
-    public static void sendPlayerInformation(Player player, NotificationType notificationType, String key, String... values)
-    {
-        if(UserManager.getPlayer(player) == null || !UserManager.getPlayer(player).useChatNotifications())
+    public static void sendPlayerInformation(Player player, NotificationType notificationType, String key, String... values) {
+        if (UserManager.getPlayer(player) == null || !UserManager.getPlayer(player).useChatNotifications())
             return;
 
         McMMOMessageType destination = AdvancedConfig.getInstance().doesNotificationUseActionBar(notificationType) ? McMMOMessageType.ACTION_BAR : McMMOMessageType.SYSTEM;
@@ -109,15 +105,16 @@ public class NotificationManager {
         final Audience audience = mcMMO.getAudiences().player(player);
 
         //If the message is being sent to the action bar we need to check if the copy if a copy is sent to the chat system
-        if(customEvent.getChatMessageType() == McMMOMessageType.ACTION_BAR)
-        {
+        if (customEvent.getChatMessageType() == McMMOMessageType.ACTION_BAR) {
             audience.sendActionBar(customEvent.getNotificationTextComponent());
 
-            if(customEvent.isMessageAlsoBeingSentToChat())
+            /* // OMNI REMOVED
+             *             if(customEvent.isMessageAlsoBeingSentToChat())
             {
                 //Send copy to chat system
                 audience.sendMessage(Identity.nil(), customEvent.getNotificationTextComponent(), MessageType.SYSTEM);
             }
+             */
         } else {
             audience.sendMessage(Identity.nil(), customEvent.getNotificationTextComponent(), MessageType.SYSTEM);
         }
@@ -135,13 +132,13 @@ public class NotificationManager {
 
     /**
      * Handles sending level up notifications to a mcMMOPlayer
+     *
      * @param mcMMOPlayer target mcMMOPlayer
-     * @param skillName skill that leveled up
-     * @param newLevel new level of that skill
+     * @param skillName   skill that leveled up
+     * @param newLevel    new level of that skill
      */
-    public static void sendPlayerLevelUpNotification(McMMOPlayer mcMMOPlayer, PrimarySkillType skillName, int levelsGained, int newLevel)
-    {
-        if(!mcMMOPlayer.useChatNotifications())
+    public static void sendPlayerLevelUpNotification(McMMOPlayer mcMMOPlayer, PrimarySkillType skillName, int levelsGained, int newLevel) {
+        if (!mcMMOPlayer.useChatNotifications())
             return;
 
         McMMOMessageType destination = AdvancedConfig.getInstance().doesNotificationUseActionBar(NotificationType.LEVEL_UP_MESSAGE) ? McMMOMessageType.ACTION_BAR : McMMOMessageType.SYSTEM;
@@ -152,17 +149,14 @@ public class NotificationManager {
         sendNotification(mcMMOPlayer.getPlayer(), customEvent);
     }
 
-    public static void broadcastTitle(Server server, String title, String subtitle, int i1, int i2, int i3)
-    {
-        for(Player player : server.getOnlinePlayers())
-        {
+    public static void broadcastTitle(Server server, String title, String subtitle, int i1, int i2, int i3) {
+        for (Player player : server.getOnlinePlayers()) {
             player.sendTitle(title, subtitle, i1, i2, i3);
         }
     }
 
-    public static void sendPlayerUnlockNotification(McMMOPlayer mcMMOPlayer, SubSkillType subSkillType)
-    {
-        if(!mcMMOPlayer.useChatNotifications())
+    public static void sendPlayerUnlockNotification(McMMOPlayer mcMMOPlayer, SubSkillType subSkillType) {
+        if (!mcMMOPlayer.useChatNotifications())
             return;
 
         //CHAT MESSAGE
@@ -182,17 +176,16 @@ public class NotificationManager {
     /**
      * Sends a message to all admins with the admin notification formatting from the locale
      * Admins are currently players with either Operator status or Admin Chat permission
+     *
      * @param msg message fetched from locale
      */
     private static void sendAdminNotification(String msg) {
         //If its not enabled exit
-        if(!Config.getInstance().adminNotifications())
+        if (!Config.getInstance().adminNotifications())
             return;
 
-        for(Player player : Bukkit.getServer().getOnlinePlayers())
-        {
-            if(player.isOp() || Permissions.adminChat(player))
-            {
+        for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+            if (player.isOp() || Permissions.adminChat(player)) {
                 player.sendMessage(LocaleLoader.getString("Notifications.Admin.Format.Others", msg));
             }
         }
@@ -203,8 +196,9 @@ public class NotificationManager {
 
     /**
      * Sends a confirmation message to the CommandSender who just executed an admin command
+     *
      * @param commandSender target command sender
-     * @param msg message fetched from locale
+     * @param msg           message fetched from locale
      */
     private static void sendAdminCommandConfirmation(CommandSender commandSender, String msg) {
         commandSender.sendMessage(LocaleLoader.getString("Notifications.Admin.Format.Self", msg));
@@ -212,7 +206,8 @@ public class NotificationManager {
 
     /**
      * Convenience method to report info about a command sender using a sensitive command
-     * @param commandSender the command user
+     *
+     * @param commandSender        the command user
      * @param sensitiveCommandType type of command issued
      */
     public static void processSensitiveCommandNotification(CommandSender commandSender, SensitiveCommandType sensitiveCommandType, String... args) {
@@ -221,14 +216,12 @@ public class NotificationManager {
          */
         String senderName = LocaleLoader.getString("Server.ConsoleName");
 
-        if(commandSender instanceof Player)
-        {
+        if (commandSender instanceof Player) {
             senderName = ((Player) commandSender).getDisplayName() + ChatColor.RESET + "-" + ((Player) commandSender).getUniqueId();
         }
 
         //Send the notification
-        switch(sensitiveCommandType)
-        {
+        switch (sensitiveCommandType) {
             case XPRATE_MODIFY:
                 sendAdminNotification(LocaleLoader.getString("Notifications.Admin.XPRate.Start.Others", addItemToFirstPositionOfArray(senderName, args)));
                 sendAdminCommandConfirmation(commandSender, LocaleLoader.getString("Notifications.Admin.XPRate.Start.Self", args));
@@ -243,7 +236,8 @@ public class NotificationManager {
     /**
      * Takes an array and an object, makes a new array with object in the first position of the new array,
      * and the following elements in this new array being a copy of the existing array retaining their order
-     * @param itemToAdd the string to put at the beginning of the new array
+     *
+     * @param itemToAdd     the string to put at the beginning of the new array
      * @param existingArray the existing array to be copied to the new array at position [0]+1 relative to their original index
      * @return the new array combining itemToAdd at the start and existing array elements following while retaining their order
      */
