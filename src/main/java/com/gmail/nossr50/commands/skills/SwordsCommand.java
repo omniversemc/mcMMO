@@ -92,8 +92,6 @@ public class SwordsCommand extends SkillCommand {
 
             messages.add(LocaleLoader.getString("Swords.SubSkill.Rupture.Stat.TickDamage", rupturePureTickDamageAgainstPlayers, rupturePureTickDamageAgainstMobs));
 //            messages.add(LocaleLoader.getString("Swords.SubSkill.Rupture.Stat.ExplosionDamage", ruptureExplosionDamageAgainstPlayers, ruptureExplosionDamageAgainstMobs));
-
-            messages.add(LocaleLoader.getString("Swords.Combat.Rupture.Note.Update.One"));
         }
 
         if (canSerratedStrike) {

@@ -123,11 +123,14 @@ public class NotificationManager {
         {
             audience.sendActionBar(customEvent.getNotificationTextComponent());
 
+            // OMNI - Remove duplicate notification type
+            /*
             if(customEvent.isMessageAlsoBeingSentToChat())
             {
                 //Send copy to chat system
                 audience.sendMessage(Identity.nil(), customEvent.getNotificationTextComponent(), MessageType.SYSTEM);
             }
+             */
         } else {
             audience.sendMessage(Identity.nil(), customEvent.getNotificationTextComponent(), MessageType.SYSTEM);
         }
