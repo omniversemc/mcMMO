@@ -4,12 +4,11 @@ import com.gmail.nossr50.datatypes.chat.ChatChannel;
 import com.gmail.nossr50.util.text.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ChatConfig extends AutoUpdateConfigLoader {
+public class ChatConfig extends BukkitConfig {
     private static ChatConfig instance;
 
     private ChatConfig() {
         super("chat.yml");
-        validate();
     }
 
     public static ChatConfig getInstance() {
@@ -26,8 +25,8 @@ public class ChatConfig extends AutoUpdateConfigLoader {
     }
 
     @Override
-    protected boolean validateKeys() {
-        return true;
+    protected void validateConfigKeys() {
+        //TODO: Rewrite legacy validation code
     }
 
     public boolean isChatEnabled() {
@@ -41,7 +40,9 @@ public class ChatConfig extends AutoUpdateConfigLoader {
 
     /**
      * Whether or not to use display names for players in target {@link ChatChannel}
+     *
      * @param chatChannel target chat channel
+     *
      * @return true if display names should be used
      */
     public boolean useDisplayNames(@NotNull ChatChannel chatChannel) {

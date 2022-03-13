@@ -1,7 +1,6 @@
 package com.gmail.nossr50.skills.unarmed;
 
 import com.gmail.nossr50.api.ItemSpawnReason;
-import com.gmail.nossr50.config.AdvancedConfig;
 import com.gmail.nossr50.datatypes.interactions.NotificationType;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.datatypes.skills.PrimarySkillType;
@@ -10,10 +9,7 @@ import com.gmail.nossr50.datatypes.skills.SuperAbilityType;
 import com.gmail.nossr50.datatypes.skills.ToolType;
 import com.gmail.nossr50.mcMMO;
 import com.gmail.nossr50.skills.SkillManager;
-import com.gmail.nossr50.util.EventUtils;
-import com.gmail.nossr50.util.ItemUtils;
-import com.gmail.nossr50.util.Misc;
-import com.gmail.nossr50.util.Permissions;
+import com.gmail.nossr50.util.*;
 import com.gmail.nossr50.util.player.NotificationManager;
 import com.gmail.nossr50.util.player.UserManager;
 import com.gmail.nossr50.util.random.RandomChanceUtil;
@@ -25,6 +21,7 @@ import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 public class UnarmedManager extends SkillManager {
 
@@ -70,7 +67,7 @@ public class UnarmedManager extends SkillManager {
         return Permissions.isSubSkillEnabled(getPlayer(), SubSkillType.UNARMED_BLOCK_CRACKER);
     }
 
-    public boolean blockCrackerCheck(BlockState blockState) {
+    public boolean blockCrackerCheck(@NotNull BlockState blockState) {
         if (!RandomChanceUtil.isActivationSuccessful(SkillActivationType.ALWAYS_FIRES, SubSkillType.UNARMED_BLOCK_CRACKER, getPlayer())) {
             return false;
         }
@@ -101,8 +98,8 @@ public class UnarmedManager extends SkillManager {
      *
      * @param defender The defending player
      */
-    public void disarmCheck(Player defender) {
-        if (RandomChanceUtil.isActivationSuccessful(SkillActivationType.RANDOM_LINEAR_100_SCALE_WITH_CAP, SubSkillType.UNARMED_DISARM, getPlayer(), mmoPlayer.getAttackStrength()) && !hasIronGrip(defender)) {
+    public void disarmCheck(@NotNull Player defender) {
+        if (RandomChanceUtil.isActivationSuccessful(SkillActivationType.RANDOM_LINEAR_100_SCALE_WITH_CAP, SubSkillType.UNARMED_DISARM, getPlayer()) && !hasIronGrip(defender)) {
             if (EventUtils.callDisarmEvent(defender).isCancelled()) {
                 return;
             }
@@ -110,10 +107,10 @@ public class UnarmedManager extends SkillManager {
             if(UserManager.getPlayer(defender) == null)
                 return;
 
-            Item item = Misc.spawnItem(defender.getLocation(), defender.getInventory().getItemInMainHand(), ItemSpawnReason.UNARMED_DISARMED_ITEM);
+            Item item = Misc.spawnItem(getPlayer(), defender.getLocation(), defender.getInventory().getItemInMainHand(), ItemSpawnReason.UNARMED_DISARMED_ITEM);
 
-            if (item != null && AdvancedConfig.getInstance().getDisarmProtected()) {
-                item.setMetadata(mcMMO.disarmedItemKey, UserManager.getPlayer(defender).getPlayerMetadata());
+            if (item != null && mcMMO.p.getAdvancedConfig().getDisarmProtected()) {
+                item.setMetadata(MetadataConstants.METADATA_KEY_DISARMED_ITEM, UserManager.getPlayer(defender).getPlayerMetadata());
             }
 
             defender.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
@@ -166,8 +163,8 @@ public class UnarmedManager extends SkillManager {
         double finalBonus = bonus + 0.5 + (rank / 2);
 
 
-        if(AdvancedConfig.getInstance().isSteelArmDamageCustom()) {
-            return AdvancedConfig.getInstance().getSteelArmOverride(RankUtils.getRank(getPlayer(), SubSkillType.UNARMED_STEEL_ARM_STYLE), finalBonus);
+        if(mcMMO.p.getAdvancedConfig().isSteelArmDamageCustom()) {
+            return mcMMO.p.getAdvancedConfig().getSteelArmOverride(RankUtils.getRank(getPlayer(), SubSkillType.UNARMED_STEEL_ARM_STYLE), finalBonus);
         } else {
             return finalBonus;
         }
@@ -179,7 +176,7 @@ public class UnarmedManager extends SkillManager {
      * @param defender The defending player
      * @return true if the defender was not disarmed, false otherwise
      */
-    private boolean hasIronGrip(Player defender) {
+    private boolean hasIronGrip(@NotNull Player defender) {
         if (!Misc.isNPCEntityExcludingVillagers(defender)
                 && Permissions.isSubSkillEnabled(defender, SubSkillType.UNARMED_IRON_GRIP)
                 && RandomChanceUtil.isActivationSuccessful(SkillActivationType.RANDOM_LINEAR_100_SCALE_WITH_CAP, SubSkillType.UNARMED_IRON_GRIP, defender)) {

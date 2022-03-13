@@ -1,13 +1,12 @@
 package com.gmail.nossr50.config;
 
-import com.gmail.nossr50.util.compat.layers.persistentdata.MobMetaFlagType;
+import com.gmail.nossr50.metadata.MobMetaFlagType;
 
-public class PersistentDataConfig extends AutoUpdateConfigLoader {
+public class PersistentDataConfig extends BukkitConfig {
     private static PersistentDataConfig instance;
 
     private PersistentDataConfig() {
         super("persistent_data.yml");
-        validate();
     }
 
     public static PersistentDataConfig getInstance() {
@@ -24,8 +23,8 @@ public class PersistentDataConfig extends AutoUpdateConfigLoader {
     }
 
     @Override
-    protected boolean validateKeys() {
-        return true;
+    protected void validateConfigKeys() {
+        //TODO: Rewrite legacy validation code
     }
 
     //Persistent Data Toggles
@@ -33,5 +32,10 @@ public class PersistentDataConfig extends AutoUpdateConfigLoader {
         String key = "Persistent_Data.Mobs.Flags." + mobMetaFlagType.toString() + ".Saved_To_Disk";
         return config.getBoolean(key, false);
     }
+
+    public boolean useBlockTracker() {
+        return config.getBoolean("mcMMO_Region_System.Enabled", true);
+    }
+
 
 }

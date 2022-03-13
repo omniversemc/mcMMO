@@ -1,7 +1,5 @@
 package com.gmail.nossr50.util;
 
-import com.gmail.nossr50.config.AdvancedConfig;
-import com.gmail.nossr50.config.Config;
 import com.gmail.nossr50.datatypes.MobHealthbarType;
 import com.gmail.nossr50.datatypes.meta.OldName;
 import com.gmail.nossr50.mcMMO;
@@ -37,7 +35,7 @@ public final class MobHealthbarUtils {
      * @param damage damage done by the attack triggering this
      */
     public static void handleMobHealthbars(LivingEntity target, double damage, mcMMO plugin) {
-        if (mcMMO.isHealthBarPluginEnabled() || !Config.getInstance().getMobHealthbarEnabled()) {
+        if (mcMMO.isHealthBarPluginEnabled() || !mcMMO.p.getGeneralConfig().getMobHealthbarEnabled()) {
             return;
         }
 
@@ -56,35 +54,31 @@ public final class MobHealthbarUtils {
         /*
          * Store the name in metadata
          */
-        if(target.getMetadata("mcMMO_oldName").size() <= 0 && originalName != null)
-            target.setMetadata("mcMMO_oldName", new OldName(originalName, plugin));
+        if(target.getMetadata(MetadataConstants.METADATA_KEY_OLD_NAME_KEY).size() <= 0)
+            target.setMetadata(MetadataConstants.METADATA_KEY_OLD_NAME_KEY, new OldName(originalName, plugin));
 
         if (oldName == null) {
             oldName = "";
         }
-        else if (oldName.equalsIgnoreCase(AdvancedConfig.getInstance().getKrakenName())) {
-            return;
-        }
-
 
         boolean oldNameVisible = target.isCustomNameVisible();
-        String newName = createHealthDisplay(Config.getInstance().getMobHealthbarDefault(), target, damage);
+        String newName = createHealthDisplay(mcMMO.p.getGeneralConfig().getMobHealthbarDefault(), target, damage);
 
         target.setCustomName(newName);
         target.setCustomNameVisible(true);
 
-        int displayTime = Config.getInstance().getMobHealthbarTime();
+        int displayTime = mcMMO.p.getGeneralConfig().getMobHealthbarTime();
 
         if (displayTime != -1) {
             boolean updateName = !ChatColor.stripColor(oldName).equalsIgnoreCase(ChatColor.stripColor(newName));
 
             if (updateName) {
-                target.setMetadata(mcMMO.customNameKey, new FixedMetadataValue(mcMMO.p, oldName));
-                target.setMetadata(mcMMO.customVisibleKey, new FixedMetadataValue(mcMMO.p, oldNameVisible));
+                target.setMetadata(MetadataConstants.METADATA_KEY_CUSTOM_NAME, new FixedMetadataValue(mcMMO.p, oldName));
+                target.setMetadata(MetadataConstants.METADATA_KEY_NAME_VISIBILITY, new FixedMetadataValue(mcMMO.p, oldNameVisible));
             }
-            else if (!target.hasMetadata(mcMMO.customNameKey)) {
-                target.setMetadata(mcMMO.customNameKey, new FixedMetadataValue(mcMMO.p, ""));
-                target.setMetadata(mcMMO.customVisibleKey, new FixedMetadataValue(mcMMO.p, false));
+            else if (!target.hasMetadata(MetadataConstants.METADATA_KEY_CUSTOM_NAME)) {
+                target.setMetadata(MetadataConstants.METADATA_KEY_CUSTOM_NAME, new FixedMetadataValue(mcMMO.p, ""));
+                target.setMetadata(MetadataConstants.METADATA_KEY_NAME_VISIBILITY, new FixedMetadataValue(mcMMO.p, false));
             }
 
             new MobHealthDisplayUpdaterTask(target).runTaskLater(mcMMO.p, displayTime * Misc.TICK_CONVERSION_FACTOR); // Clear health display after 3 seconds
@@ -136,7 +130,7 @@ public final class MobHealthbarUtils {
                 return null;
         }
 
-        int coloredDisplay = (int) Math.ceil(fullDisplay * (healthPercentage / 100.0D));
+        int coloredDisplay = (int) Math.max(Math.ceil(fullDisplay * (healthPercentage / 100.0D)), 0.5);
         int grayDisplay = fullDisplay - coloredDisplay;
 
         StringBuilder healthbar = new StringBuilder(color + "");
