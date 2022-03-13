@@ -5,7 +5,6 @@ import com.gmail.nossr50.config.WorldBlacklist;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.datatypes.skills.PrimarySkillType;
 import com.gmail.nossr50.datatypes.skills.SubSkillType;
-import com.gmail.nossr50.events.fake.FakeBrewEvent;
 import com.gmail.nossr50.mcMMO;
 import com.gmail.nossr50.runnables.player.PlayerUpdateInventoryTask;
 import com.gmail.nossr50.skills.alchemy.Alchemy;
@@ -348,9 +347,6 @@ public class InventoryListener implements Listener {
     {
         /* WORLD BLACKLIST CHECK */
         if(WorldBlacklist.isWorldBlacklisted(event.getBlock().getWorld()))
-            return;
-
-        if (event instanceof FakeBrewEvent)
             return;
         Location location = event.getBlock().getLocation();
         if (Alchemy.brewingStandMap.containsKey(location)) {
