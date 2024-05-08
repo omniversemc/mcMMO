@@ -49,7 +49,6 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Locale;
 
@@ -149,12 +148,7 @@ public class PlayerListener implements Listener {
         new MobHealthDisplayUpdaterTask(attacker).run();
 
         // set the name back
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                MobHealthbarUtils.handleMobHealthbars(attacker, 0, mcMMO.p);
-            }
-        }.runTaskLater(mcMMO.p, 1);
+        mcMMO.p.getFoliaLib().getImpl().runAtEntityLater(attacker, () -> MobHealthbarUtils.handleMobHealthbars(attacker, 0, mcMMO.p), 1);
     }
 
     /**
@@ -450,6 +444,9 @@ public class PlayerListener implements Listener {
             case CAUGHT_FISH:
                 if(caught instanceof Item) {
                     if(ExperienceConfig.getInstance().isFishingExploitingPrevented()) {
+
+                        fishingManager.processExploiting(event.getHook().getLocation().toVector());
+
                         if (fishingManager.isExploitingFishing(event.getHook().getLocation().toVector())) {
                             player.sendMessage(LocaleLoader.getString("Fishing.ScarcityTip", ExperienceConfig.getInstance().getFishingExploitingOptionMoveRange()));
                             event.setExpToDrop(0);
@@ -592,7 +589,7 @@ public class PlayerListener implements Listener {
         Player player = event.getPlayer();
 
         //Delay loading for 3 seconds in case the player has a save task running, its hacky but it should do the trick
-        new PlayerProfileLoadingTask(player).runTaskLaterAsynchronously(mcMMO.p, 60);
+        mcMMO.p.getFoliaLib().getImpl().runLaterAsync(new PlayerProfileLoadingTask(player), 60);
 
         if (mcMMO.p.getGeneralConfig().getMOTDEnabled() && Permissions.motd(player)) {
             Motd.displayAll(player);
@@ -790,6 +787,9 @@ public class PlayerListener implements Listener {
         }
 
         McMMOPlayer mcMMOPlayer = UserManager.getPlayer(player);
+        if (mcMMOPlayer == null)
+            return;
+
         ItemStack heldItem = player.getInventory().getItemInMainHand();
 
         //Spam Fishing Detection
@@ -863,7 +863,7 @@ public class PlayerListener implements Listener {
                             // Bukkit.getPluginManager().callEvent(fakeSwing);
                             player.getInventory().getItemInMainHand().setAmount(heldItem.getAmount() - 1);
                             player.updateInventory();
-                            if (herbalismManager.processGreenThumbBlocks(blockState) && EventUtils.simulateBlockBreak(block, player, false)) {
+                            if (herbalismManager.processGreenThumbBlocks(blockState) && EventUtils.simulateBlockBreak(block, player)) {
                                 blockState.update(true);
                             }
                         }
@@ -874,7 +874,7 @@ public class PlayerListener implements Listener {
                             // Bukkit.getPluginManager().callEvent(fakeSwing);
                             event.setCancelled(true);
                             if (herbalismManager.processShroomThumb(blockState)
-                                    && EventUtils.simulateBlockBreak(block, player, false)) {
+                                    && EventUtils.simulateBlockBreak(block, player)) {
                                 blockState.update(true);
                             }
                         }
@@ -955,8 +955,8 @@ public class PlayerListener implements Listener {
         McMMOPlayer mcMMOPlayer = UserManager.getOfflinePlayer(player);
 
         if (mcMMOPlayer == null) {
-            mcMMO.p.debug(player.getName() + "is chatting, but is currently not logged in to the server.");
-            mcMMO.p.debug("Party & Admin chat will not work properly for this player.");
+            LogUtils.debug(mcMMO.p.getLogger(), player.getName() + "is chatting, but is currently not logged in to the server.");
+            LogUtils.debug(mcMMO.p.getLogger(), "Party & Admin chat will not work properly for this player.");
             return;
         }
 

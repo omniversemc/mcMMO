@@ -3,7 +3,7 @@ package com.gmail.nossr50.runnables.items;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.party.PartyManager;
+import com.gmail.nossr50.util.CancellableRunnable;
 import com.gmail.nossr50.util.EventUtils;
 import com.gmail.nossr50.util.Misc;
 import com.gmail.nossr50.util.Permissions;
@@ -11,9 +11,8 @@ import com.gmail.nossr50.util.skills.SkillUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
-public class TeleportationWarmup extends BukkitRunnable {
+public class TeleportationWarmup extends CancellableRunnable {
     private final McMMOPlayer mcMMOPlayer;
     private final McMMOPlayer mcMMOTarget;
 
@@ -32,7 +31,7 @@ public class TeleportationWarmup extends BukkitRunnable {
 
         mcMMOPlayer.setTeleportCommenceLocation(null);
 
-        if (!PartyManager.inSameParty(teleportingPlayer, targetPlayer)) {
+        if (!mcMMO.p.getPartyManager().inSameParty(teleportingPlayer, targetPlayer)) {
             teleportingPlayer.sendMessage(LocaleLoader.getString("Party.NotInYourParty", targetPlayer.getName()));
             return;
         }

@@ -12,7 +12,6 @@ import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -255,7 +254,7 @@ public final class Misc {
 
         if (player != null) {
             UserManager.remove(player);
-            new PlayerProfileLoadingTask(player).runTaskLaterAsynchronously(mcMMO.p, 1); // 1 Tick delay to ensure the player is marked as online before we begin loading
+            mcMMO.p.getFoliaLib().getImpl().runLaterAsync(new PlayerProfileLoadingTask(player), 1); // 1 Tick delay to ensure the player is marked as online before we begin loading
         }
     }
 
@@ -303,7 +302,7 @@ public final class Misc {
     }
 
     /**
-     * Whether or not a player is the party leader of a party
+     * Whether a player is the party leader of a party
      *
      * @param mmoPlayer target player
      * @return true if the player is the party leader
@@ -326,7 +325,7 @@ public final class Misc {
         experienceOrb.setExperience(experienceValue);
     }
 
-    private static class SpawnOrbTask extends BukkitRunnable {
+    private static class SpawnOrbTask implements Runnable {
         private final Location location;
         private int orbExpValue;
 
@@ -344,4 +343,26 @@ public final class Misc {
             experienceOrb.setExperience(orbExpValue);
         }
     }
+
+//    public static void hackyUnitTest(@NotNull McMMOPlayer normalPlayer) {
+//        mcMMO.p.getLogger().info("Starting hacky unit test...");
+//        int iterations = 1000000;
+//        double ratioDivisor = 10000; //10000 because we run the test 1,000,000 times
+//        double expectedFailRate = 100.0D - RandomChanceUtil.getRandomChanceExecutionSuccess(normalPlayer.getPlayer(), SubSkillType.MINING_MOTHER_LODE, true);
+//
+//        double win = 0, loss = 0;
+//        for(int x = 0; x < iterations; x++) {
+//            if(RandomChanceUtil.checkRandomChanceExecutionSuccess(normalPlayer.getPlayer(), SubSkillType.MINING_MOTHER_LODE, true)) {
+//                win++;
+//            } else {
+//                loss++;
+//            }
+//        }
+//
+//        double lossRatio = (loss / ratioDivisor);
+//        mcMMO.p.getLogger().info("Expected Fail Rate: "+expectedFailRate);
+//        mcMMO.p.getLogger().info("Loss Ratio for hacky test: "+lossRatio);
+////        Assert.assertEquals(lossRatio, expectedFailRate, 0.01D);
+//    }
+
 }

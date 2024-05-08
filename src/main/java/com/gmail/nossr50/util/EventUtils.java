@@ -1,5 +1,7 @@
 package com.gmail.nossr50.util;
 
+import com.gmail.nossr50.api.FakeBlockBreakEventType;
+import com.gmail.nossr50.api.TreeFellerBlockBreakEvent;
 import com.gmail.nossr50.datatypes.experience.XPGainReason;
 import com.gmail.nossr50.datatypes.experience.XPGainSource;
 import com.gmail.nossr50.datatypes.party.Party;
@@ -13,7 +15,10 @@ import com.gmail.nossr50.events.experience.McMMOPlayerLevelChangeEvent;
 import com.gmail.nossr50.events.experience.McMMOPlayerLevelDownEvent;
 import com.gmail.nossr50.events.experience.McMMOPlayerLevelUpEvent;
 import com.gmail.nossr50.events.experience.McMMOPlayerXpGainEvent;
-import com.gmail.nossr50.events.fake.*;
+import com.gmail.nossr50.events.fake.FakeBlockBreakEvent;
+import com.gmail.nossr50.events.fake.FakeBlockDamageEvent;
+import com.gmail.nossr50.events.fake.FakeEvent;
+import com.gmail.nossr50.events.fake.FakePlayerFishEvent;
 import com.gmail.nossr50.events.hardcore.McMMOPlayerPreDeathPenaltyEvent;
 import com.gmail.nossr50.events.hardcore.McMMOPlayerStatLossEvent;
 import com.gmail.nossr50.events.hardcore.McMMOPlayerVampirismEvent;
@@ -43,9 +48,8 @@ import org.bukkit.entity.FishHook;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerAnimationEvent;
-import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -80,17 +84,6 @@ public final class EventUtils {
      */
     public static boolean isFakeEvent(@NotNull Event event) {
         return event instanceof FakeEvent;
-    }
-
-    /**
-     * Checks to see if damage is from natural sources
-     * This cannot be used to determine if damage is from vanilla MC, it just checks to see if the damage is from a complex behaviour in mcMMO such as bleed.
-     *
-     * @param event this event
-     * @return true if damage is NOT from an unnatural mcMMO skill (such as bleed DOTs)
-     */
-    public static boolean isDamageFromMcMMOComplexBehaviour(@NotNull Event event) {
-        return event instanceof FakeEntityDamageEvent;
     }
 
     /**
@@ -190,8 +183,7 @@ public final class EventUtils {
      * @param subSkillType target subskill
      * @return the event after it has been fired
      */
-    @Deprecated
-    public static @NotNull SubSkillEvent callSubSkillEvent(Player player, SubSkillType subSkillType) {
+    public static @NotNull SubSkillEvent callSubSkillEvent(@NotNull Player player, @NotNull SubSkillType subSkillType) {
         SubSkillEvent event = new SubSkillEvent(player, subSkillType);
         mcMMO.p.getServer().getPluginManager().callEvent(event);
 
@@ -205,7 +197,6 @@ public final class EventUtils {
      * @param block associated block
      * @return the event after it has been fired
      */
-    @Deprecated
     public static @NotNull SubSkillBlockEvent callSubSkillBlockEvent(@NotNull Player player, @NotNull SubSkillType subSkillType, @NotNull Block block) {
         SubSkillBlockEvent event = new SubSkillBlockEvent(player, subSkillType, block);
         mcMMO.p.getServer().getPluginManager().callEvent(event);
@@ -307,26 +298,50 @@ public final class EventUtils {
     /**
      * Simulate a block break event.
      *
-     * @param block The block to break
-     * @param player The player breaking the block
-     * @param shouldArmSwing true if an armswing event should be fired, false otherwise
+     * @param block          The block to break
+     * @param player         The player breaking the block
+     * @param shouldArmSwing ignored (here for API compatibility)
      * @return true if the event wasn't cancelled, false otherwise
+     * {@code @Deprecated} use {@link #simulateBlockBreak(Block, Player, FakeBlockBreakEventType)} instead
      */
     public static boolean simulateBlockBreak(Block block, Player player, boolean shouldArmSwing) {
-        PluginManager pluginManager = mcMMO.p.getServer().getPluginManager();
+        return simulateBlockBreak(block, player);
+    }
 
-        // Support for NoCheat
-        //if (shouldArmSwing) {
-        //    callFakeArmSwingEvent(player);
-        //}
+    /**
+     * Simulate a block break event.
+     *
+     * @param block The block to break
+     * @param player The player breaking the block
+     * @return true if the event wasn't cancelled, false otherwise
+     * {@code @Deprecated} use {@link #simulateBlockBreak(Block, Player, FakeBlockBreakEventType)} instead
+     */
+    public static boolean simulateBlockBreak(Block block, Player player) {
+        return simulateBlockBreak(block, player, FakeBlockBreakEventType.FAKE);
+    }
+
+    /**
+     * Simulate a block break event.
+     *
+     * @param block  The block to break
+     * @param player The player breaking the block
+     * @param eventType The type of event to signal to other plugins
+     * @return true if the event wasn't cancelled, false otherwise
+     */
+    public static boolean simulateBlockBreak(Block block, Player player, FakeBlockBreakEventType eventType) {
+        PluginManager pluginManager = mcMMO.p.getServer().getPluginManager();
 
         FakeBlockDamageEvent damageEvent = new FakeBlockDamageEvent(player, block, player.getInventory().getItemInMainHand(), true);
         pluginManager.callEvent(damageEvent);
 
-        FakeBlockBreakEvent breakEvent = new FakeBlockBreakEvent(block, player);
-        pluginManager.callEvent(breakEvent);
+        BlockBreakEvent fakeBlockBreakEvent = null;
 
-        return !damageEvent.isCancelled() && !breakEvent.isCancelled();
+        switch (eventType) {
+            case FAKE -> fakeBlockBreakEvent = new FakeBlockBreakEvent(block, player);
+            case TREE_FELLER -> fakeBlockBreakEvent = new TreeFellerBlockBreakEvent(block, player);
+        }
+        pluginManager.callEvent(fakeBlockBreakEvent);
+        return !damageEvent.isCancelled() && !fakeBlockBreakEvent.isCancelled();
     }
 
     public static void handlePartyTeleportEvent(Player teleportingPlayer, Player targetPlayer) {
@@ -342,7 +357,8 @@ public final class EventUtils {
             return;
         }
 
-        teleportingPlayer.teleport(targetPlayer);
+//        teleportingPlayer.teleport(targetPlayer);
+        mcMMO.p.getFoliaLib().getImpl().teleportAsync(teleportingPlayer, targetPlayer.getLocation());
 
         teleportingPlayer.sendMessage(LocaleLoader.getString("Party.Teleport.Player", targetPlayer.getName()));
         targetPlayer.sendMessage(LocaleLoader.getString("Party.Teleport.Target", teleportingPlayer.getName()));
@@ -381,7 +397,7 @@ public final class EventUtils {
         McMMOPlayer mmoPlayer = UserManager.getPlayer(player);
         if(mmoPlayer == null)
             return true;
-        
+
         McMMOPlayerXpGainEvent event = new McMMOPlayerXpGainEvent(player, skill, xpGained, xpGainReason);
         mcMMO.p.getServer().getPluginManager().callEvent(event);
 

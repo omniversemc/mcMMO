@@ -7,8 +7,7 @@ import com.gmail.nossr50.datatypes.skills.SubSkillType;
 import com.gmail.nossr50.mcMMO;
 import com.gmail.nossr50.skills.repair.Repair;
 import com.gmail.nossr50.skills.salvage.Salvage;
-import com.gmail.nossr50.util.random.RandomChanceSkill;
-import com.gmail.nossr50.util.random.RandomChanceUtil;
+import com.gmail.nossr50.util.random.ProbabilityUtil;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -21,6 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 
 public final class BlockUtils {
+
+    public static final String SHORT_GRASS = "SHORT_GRASS";
+    public static final String GRASS = "GRASS";
 
     private BlockUtils() {
     }
@@ -36,6 +38,33 @@ public final class BlockUtils {
             blockState.setMetadata(MetadataConstants.METADATA_KEY_BONUS_DROPS, new BonusDropMeta(2, mcMMO.p));
         else
             blockState.setMetadata(MetadataConstants.METADATA_KEY_BONUS_DROPS, new BonusDropMeta(1, mcMMO.p));
+    }
+
+    /**
+     * Util method for compatibility across Minecraft versions, grabs the {@link Material} enum for short_grass
+     *
+     * @return the {@link Material} enum for short_grass
+     */
+    public static Material getShortGrass() {
+        if (Material.getMaterial(SHORT_GRASS) != null) {
+            return Material.getMaterial(SHORT_GRASS);
+        } else if (Material.getMaterial(GRASS) != null) {
+            return Material.getMaterial(GRASS);
+        } else {
+            throw new UnsupportedOperationException("Unable to find short grass material");
+        }
+    }
+
+    /**
+     * Set up the state for a block to be seen as unnatural and cleanup any unwanted metadata from the block
+     * @param block target block
+     */
+    public static void setUnnaturalBlock(@NotNull Block block) {
+        mcMMO.getPlaceStore().setTrue(block);
+
+        // Failsafe against lingering metadata
+        if(block.hasMetadata(MetadataConstants.METADATA_KEY_BONUS_DROPS))
+            block.removeMetadata(MetadataConstants.METADATA_KEY_BONUS_DROPS, mcMMO.p);
     }
 
     /**
@@ -68,7 +97,7 @@ public final class BlockUtils {
      */
     public static boolean checkDoubleDrops(Player player, BlockState blockState, PrimarySkillType skillType, SubSkillType subSkillType) {
         if (mcMMO.p.getGeneralConfig().getDoubleDropsEnabled(skillType, blockState.getType()) && Permissions.isSubSkillEnabled(player, subSkillType)) {
-            return RandomChanceUtil.checkRandomChanceExecutionSuccess(new RandomChanceSkill(player, subSkillType, true));
+            return ProbabilityUtil.isSkillRNGSuccessful(subSkillType, player);
         }
 
         return false;
@@ -201,22 +230,22 @@ public final class BlockUtils {
         return mcMMO.getMaterialMapStore().isTreeFellerDestructible(material);
     }
 
-    /**
-     * Determine if a given block should be affected by Flux Mining
-     *
-     * @param blockState The {@link BlockState} of the block to check
-     * @return true if the block should affected by Flux Mining, false otherwise
-     */
-    public static boolean affectedByFluxMining(BlockState blockState) {
-        switch (blockState.getType()) {
-            case IRON_ORE:
-            case GOLD_ORE:
-                return true;
-
-            default:
-                return false;
-        }
-    }
+//    /**
+//     * Determine if a given block should be affected by Flux Mining
+//     *
+//     * @param blockState The {@link BlockState} of the block to check
+//     * @return true if the block should affected by Flux Mining, false otherwise
+//     */
+//    public static boolean affectedByFluxMining(BlockState blockState) {
+//        switch (blockState.getType()) {
+//            case IRON_ORE:
+//            case GOLD_ORE:
+//                return true;
+//
+//            default:
+//                return false;
+//        }
+//    }
 
     /**
      * Determine if a given block can activate Herbalism abilities

@@ -26,7 +26,7 @@ public final class MobHealthbarUtils {
         EntityDamageEvent lastDamageCause = player.getLastDamageCause();
         String replaceString = lastDamageCause instanceof EntityDamageByEntityEvent ? StringUtils.getPrettyEntityTypeString(((EntityDamageByEntityEvent) lastDamageCause).getDamager().getType()) : "a mob";
 
-        return deathMessage.replaceAll("(?:(\u00A7(?:[0-9A-FK-ORa-fk-or]))*(?:[\u2764\u25A0]{1,10})){1,2}", replaceString);
+        return deathMessage.replaceAll("(?:(§(?:[0-9A-FK-ORa-fk-or]))*(?:[❤■]{1,10})){1,2}", replaceString);
     }
 
     /**
@@ -39,7 +39,7 @@ public final class MobHealthbarUtils {
             return;
         }
 
-        if (isBoss(target)) {
+        if (isBoss(target) || target instanceof Player) {
             return;
         }
 
@@ -81,7 +81,7 @@ public final class MobHealthbarUtils {
                 target.setMetadata(MetadataConstants.METADATA_KEY_NAME_VISIBILITY, new FixedMetadataValue(mcMMO.p, false));
             }
 
-            new MobHealthDisplayUpdaterTask(target).runTaskLater(mcMMO.p, (long) displayTime * Misc.TICK_CONVERSION_FACTOR); // Clear health display after 3 seconds
+            mcMMO.p.getFoliaLib().getImpl().runAtEntityLater(target, new MobHealthDisplayUpdaterTask(target), (long) displayTime * Misc.TICK_CONVERSION_FACTOR); // Clear health display after 3 seconds
         }
     }
 

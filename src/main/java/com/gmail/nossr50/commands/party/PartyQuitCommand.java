@@ -4,7 +4,7 @@ import com.gmail.nossr50.datatypes.party.Party;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.events.party.McMMOPartyChangeEvent.EventReason;
 import com.gmail.nossr50.locale.LocaleLoader;
-import com.gmail.nossr50.party.PartyManager;
+import com.gmail.nossr50.mcMMO;
 import com.gmail.nossr50.util.player.UserManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -26,11 +26,11 @@ public class PartyQuitCommand implements CommandExecutor {
             McMMOPlayer mcMMOPlayer = UserManager.getPlayer(player);
             Party playerParty = mcMMOPlayer.getParty();
 
-            if (!PartyManager.handlePartyChangeEvent(player, playerParty.getName(), null, EventReason.LEFT_PARTY)) {
+            if (!mcMMO.p.getPartyManager().handlePartyChangeEvent(player, playerParty.getName(), null, EventReason.LEFT_PARTY)) {
                 return true;
             }
 
-            PartyManager.removeFromParty(mcMMOPlayer);
+            mcMMO.p.getPartyManager().removeFromParty(mcMMOPlayer);
             sender.sendMessage(LocaleLoader.getString("Commands.Party.Leave"));
             return true;
         }

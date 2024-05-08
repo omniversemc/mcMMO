@@ -2,6 +2,7 @@ package com.gmail.nossr50.util.compat;
 
 import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.mcMMO;
+import com.gmail.nossr50.util.LogUtils;
 import com.gmail.nossr50.util.compat.layers.bungee.AbstractBungeeSerializerCompatibilityLayer;
 import com.gmail.nossr50.util.compat.layers.bungee.BungeeLegacySerializerCompatibilityLayer;
 import com.gmail.nossr50.util.compat.layers.bungee.BungeeModernSerializerCompatibilityLayer;
@@ -22,7 +23,6 @@ import java.util.HashMap;
  * In 2.2 we are switching to modules and that will clean things up significantly
  *
  */
-//TODO: I need to delete this crap
 public class CompatibilityManager {
     private @NotNull HashMap<CompatibilityType, Boolean> supportedLayers;
     private boolean isFullyCompatibleServerSoftware = true; //true if all compatibility layers load successfully
@@ -34,11 +34,11 @@ public class CompatibilityManager {
     private AbstractMasterAnglerCompatibility masterAnglerCompatibility;
 
     public CompatibilityManager(@NotNull MinecraftGameVersion minecraftGameVersion) {
-        mcMMO.p.getLogger().info("Loading compatibility layers...");
+        LogUtils.debug(mcMMO.p.getLogger(), "Loading compatibility layers...");
         this.minecraftGameVersion = minecraftGameVersion;
         this.nmsVersion = determineNMSVersion();
         init();
-        mcMMO.p.getLogger().info("Finished loading compatibility layers.");
+        LogUtils.debug(mcMMO.p.getLogger(), "Finished loading compatibility layers.");
     }
 
     private void init() {
@@ -158,7 +158,7 @@ public class CompatibilityManager {
         return masterAnglerCompatibility;
     }
 
-    public @Nullable MinecraftGameVersion getMinecraftGameVersion() {
+    public @NotNull MinecraftGameVersion getMinecraftGameVersion() {
         return minecraftGameVersion;
     }
 }

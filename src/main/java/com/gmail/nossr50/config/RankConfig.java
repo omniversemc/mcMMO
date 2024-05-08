@@ -3,13 +3,14 @@ package com.gmail.nossr50.config;
 import com.gmail.nossr50.datatypes.skills.SubSkillType;
 import com.gmail.nossr50.datatypes.skills.subskills.AbstractSubSkill;
 import com.gmail.nossr50.mcMMO;
+import com.gmail.nossr50.util.LogUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-public class RankConfig extends AutoUpdateConfigLoader {
+public class RankConfig extends BukkitConfig {
     private static RankConfig instance;
 
     public RankConfig() {
@@ -66,7 +67,7 @@ public class RankConfig extends AutoUpdateConfigLoader {
      */
     public int getSubSkillUnlockLevel(SubSkillType subSkillType, int rank, boolean retroMode) {
         String key = getRankAddressKey(subSkillType, rank, retroMode);
-        return config.getInt(key, getInternalConfig().getInt(key));
+        return config.getInt(key, defaultYamlConfig.getInt(key));
     }
 
     /**
@@ -128,9 +129,9 @@ public class RankConfig extends AutoUpdateConfigLoader {
 
     private void resetRankValue(@NotNull SubSkillType subSkillType, int rank, boolean retroMode) {
         String key = getRankAddressKey(subSkillType, rank, retroMode);
-        int defaultValue = getInternalConfig().getInt(key);
+        int defaultValue = defaultYamlConfig.getInt(key);
         config.set(key, defaultValue);
-        mcMMO.p.getLogger().info(key + " SET -> " + defaultValue);
+        LogUtils.debug(mcMMO.p.getLogger(), key + " SET -> " + defaultValue);
     }
 
     /**
@@ -147,10 +148,10 @@ public class RankConfig extends AutoUpdateConfigLoader {
         if (badSkillSetup.isEmpty())
             return;
 
-        mcMMO.p.getLogger().info("(FIXING CONFIG) mcMMO is correcting a few mistakes found in your skill rank config setup");
+        LogUtils.debug(mcMMO.p.getLogger(), "(FIXING CONFIG) mcMMO is correcting a few mistakes found in your skill rank config setup");
 
         for (SubSkillType subSkillType : badSkillSetup) {
-            mcMMO.p.getLogger().info("(FIXING CONFIG) Resetting rank config settings for skill named - " + subSkillType.toString());
+            LogUtils.debug(mcMMO.p.getLogger(), "(FIXING CONFIG) Resetting rank config settings for skill named - " + subSkillType.toString());
             fixBadEntries(subSkillType);
         }
     }
@@ -178,7 +179,7 @@ public class RankConfig extends AutoUpdateConfigLoader {
 
                 if (prevRank > curRank) {
                     //We're going to allow this but we're going to warn them
-                    mcMMO.p.getLogger().info("(CONFIG ISSUE) You have the ranks for the subskill " + subSkillType + " set up poorly, sequential ranks should have ascending requirements");
+                    LogUtils.debug(mcMMO.p.getLogger(), "(CONFIG ISSUE) You have the ranks for the subskill " + subSkillType + " set up poorly, sequential ranks should have ascending requirements");
                     badSkillSetup.add(subSkillType);
                 }
             }
@@ -195,6 +196,6 @@ public class RankConfig extends AutoUpdateConfigLoader {
             resetRankValue(subSkillType, index, false);
         }
 
-        saveConfig();
+        updateFile();
     }
 }

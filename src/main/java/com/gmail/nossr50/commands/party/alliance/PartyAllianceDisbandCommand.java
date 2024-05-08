@@ -3,7 +3,7 @@ package com.gmail.nossr50.commands.party.alliance;
 import com.gmail.nossr50.datatypes.party.Party;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.locale.LocaleLoader;
-import com.gmail.nossr50.party.PartyManager;
+import com.gmail.nossr50.mcMMO;
 import com.gmail.nossr50.util.player.UserManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -28,7 +28,7 @@ public class PartyAllianceDisbandCommand implements CommandExecutor {
                 return true;
             }
 
-            PartyManager.disbandAlliance(player, party, party.getAlly());
+            mcMMO.p.getPartyManager().disbandAlliance(player, party, party.getAlly());
             return true;
         }
         sender.sendMessage(LocaleLoader.getString("Commands.Usage.2", "party", "alliance", "disband"));

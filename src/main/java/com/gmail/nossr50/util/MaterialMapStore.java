@@ -10,9 +10,6 @@ import java.util.Locale;
 /**
  * Stores hash tables for item and block names
  * This allows for better support across multiple versions of Minecraft
- *
- * This is a temporary class, mcMMO is spaghetti and I'l clean it up later
- *
  */
 public class MaterialMapStore {
 
@@ -52,8 +49,8 @@ public class MaterialMapStore {
     private final @NotNull HashSet<String> bows;
     private final @NotNull HashSet<String> crossbows;
     private final @NotNull HashSet<String> tools;
-
     private final @NotNull HashSet<String> enchantables;
+    private final @NotNull HashSet<String> maces;
 
     private final @NotNull HashSet<String> ores;
     private final @NotNull HashSet<String> intendedToolPickAxe;
@@ -101,6 +98,7 @@ public class MaterialMapStore {
         shovels = new HashSet<>();
         hoes = new HashSet<>();
         tridents = new HashSet<>();
+        maces = new HashSet<>();
 
         enchantables = new HashSet<>();
 
@@ -457,6 +455,7 @@ public class MaterialMapStore {
         enchantables.addAll(tridents);
         enchantables.addAll(bows);
         enchantables.addAll(crossbows);
+        enchantables.addAll(maces);
 
         enchantables.add("shears");
         enchantables.add("fishing_rod");
@@ -480,6 +479,7 @@ public class MaterialMapStore {
         fillHoes();
         fillShovels();
         fillTridents();
+        fillMaces();
         fillStringTools();
         fillBows();
         fillCrossbows();
@@ -494,6 +494,8 @@ public class MaterialMapStore {
         tools.addAll(tridents);
         tools.addAll(stringTools);
         tools.addAll(bows);
+        tools.addAll(crossbows);
+        tools.addAll(maces);
     }
 
     private void fillBows() {
@@ -508,6 +510,10 @@ public class MaterialMapStore {
         stringTools.add("bow");
         stringTools.add("fishing_rod");
         stringTools.add("carrot_on_a_stick");
+    }
+
+    private void fillMaces() {
+        maces.add("mace");
     }
 
     private void fillTridents() {
@@ -819,6 +825,22 @@ public class MaterialMapStore {
         return crossbows.contains(id);
     }
 
+    public boolean isTrident(@NotNull Material material) {
+        return isTrident(material.getKey().getKey());
+    }
+
+    public boolean isTrident(@NotNull String id) {
+        return tridents.contains(id);
+    }
+
+    public boolean isMace(@NotNull Material material) {
+        return isMace(material.getKey().getKey());
+    }
+
+    public boolean isMace(@NotNull String id) {
+        return maces.contains(id);
+    }
+
     public boolean isLeatherArmor(@NotNull Material material) {
         return isLeatherArmor(material.getKey().getKey());
     }
@@ -995,8 +1017,8 @@ public class MaterialMapStore {
     private void fillShroomyWhiteList()
     {
         canMakeShroomyWhiteList.add("dirt");
-        canMakeShroomyWhiteList.add("grass");
-        canMakeShroomyWhiteList.add("grass_path");
+        canMakeShroomyWhiteList.add("grass_block");
+        canMakeShroomyWhiteList.add("dirt_path");
     }
 
     private void fillBlockCrackerWhiteList()
@@ -1009,14 +1031,15 @@ public class MaterialMapStore {
     private void fillHerbalismAbilityBlackList()
     {
         herbalismAbilityBlackList.add("dirt");
-        herbalismAbilityBlackList.add("grass");
-        herbalismAbilityBlackList.add("grass_path");
+        herbalismAbilityBlackList.add("grass_block");
+        herbalismAbilityBlackList.add("dirt_path");
         herbalismAbilityBlackList.add("farmland");
     }
 
     private void fillTreeFellerDestructibleWhiteList()
     {
         treeFellerDestructibleWhiteList.add("oak_leaves");
+        treeFellerDestructibleWhiteList.add("cherry_leaves");
         treeFellerDestructibleWhiteList.add("acacia_leaves");
         treeFellerDestructibleWhiteList.add("birch_leaves");
         treeFellerDestructibleWhiteList.add("dark_oak_leaves");
@@ -1171,6 +1194,7 @@ public class MaterialMapStore {
     
     private void fillToolBlackList()
     {
+        toolBlackList.add("chiseled_bookshelf");
         toolBlackList.add("black_bed");
         toolBlackList.add("blue_bed");
         toolBlackList.add("brown_bed");
@@ -1256,17 +1280,28 @@ public class MaterialMapStore {
         toolBlackList.add("yellow_shulker_box");
         toolBlackList.add("shulker_box");
         toolBlackList.add("acacia_sign");
+        toolBlackList.add("acacia_hanging_sign");
         toolBlackList.add("acacia_wall_sign");
         toolBlackList.add("birch_sign");
+        toolBlackList.add("birch_hanging_sign");
         toolBlackList.add("birch_wall_sign");
         toolBlackList.add("dark_oak_sign");
+        toolBlackList.add("dark_oak_hanging_sign");
         toolBlackList.add("dark_oak_wall_sign");
         toolBlackList.add("jungle_sign");
+        toolBlackList.add("jungle_hanging_sign");
         toolBlackList.add("jungle_wall_sign");
         toolBlackList.add("spruce_sign");
+        toolBlackList.add("spruce_hanging_sign");
         toolBlackList.add("spruce_wall_sign");
         toolBlackList.add("oak_sign");
+        toolBlackList.add("oak_hanging_sign");
         toolBlackList.add("oak_wall_sign");
+        toolBlackList.add("cherry_sign");
+        toolBlackList.add("cherry_hanging_sign");
+        toolBlackList.add("cherry_wall_sign");
+        toolBlackList.add("stripped_cherry_log");
+        toolBlackList.add("stripped_cherry_wood");
         toolBlackList.add("stripped_acacia_log");
         toolBlackList.add("stripped_acacia_wood");
         toolBlackList.add("stripped_birch_log");
@@ -1308,6 +1343,7 @@ public class MaterialMapStore {
         toolBlackList.add("lodestone");
         toolBlackList.add("respawn_anchor");
         toolBlackList.add("sweet_berry_bush");
+        toolBlackList.add("smithing_table");
     }
 
     public boolean isIntendedToolPickaxe(@NotNull Material material) {

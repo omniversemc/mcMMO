@@ -18,11 +18,6 @@ public class AdvancedConfig extends BukkitConfig {
     }
 
     @Override
-    public void initDefaults() {
-        config.addDefault("Skills.General.StartingLevel", 0);
-    }
-
-    @Override
     protected boolean validateKeys() {
         // Validate all the settings!
         List<String> reason = new ArrayList<>();
@@ -427,7 +422,7 @@ public class AdvancedConfig extends BukkitConfig {
 
     /**
      * This returns the maximum level at which superabilities will stop lengthening from scaling alongside skill level.
-     * It returns a different value depending on whether or not the server is in retro mode
+     * It returns a different value depending on whether the server is in retro mode
      *
      * @return the level at which abilities stop increasing in length
      */
@@ -440,7 +435,7 @@ public class AdvancedConfig extends BukkitConfig {
 
     /**
      * This returns the frequency at which abilities will increase in length
-     * It returns a different value depending on whether or not the server is in retro mode
+     * It returns a different value depending on whether the server is in retro mode
      *
      * @return the number of levels required per ability length increase
      */
@@ -632,7 +627,11 @@ public class AdvancedConfig extends BukkitConfig {
 
     /* ALCHEMY */
     public int getCatalysisMaxBonusLevel() {
-        return config.getInt("Skills.Alchemy.Catalysis.MaxBonusLevel", 1000);
+        if (mcMMO.isRetroModeEnabled()) {
+            return config.getInt("Skills.Alchemy.Catalysis.MaxBonusLevel.RetroMode", 1000);
+        } else {
+            return config.getInt("Skills.Alchemy.Catalysis.MaxBonusLevel.Standard", 100);
+        }
     }
 
     public double getCatalysisMinSpeed() {
@@ -696,6 +695,15 @@ public class AdvancedConfig extends BukkitConfig {
 
     public double getSkullSplitterModifier() {
         return config.getDouble("Skills.Axes.SkullSplitter.DamageModifier", 2.0D);
+    }
+
+    /* CROSSBOWS */
+    public double getPoweredShotRankDamageMultiplier() {
+        return config.getDouble("Skills.Crossbows.PoweredShot.RankDamageMultiplier", 10.0D);
+    }
+
+    public double getPoweredShotDamageMax() {
+        return config.getDouble("Skills.Archery.SkillShot.MaxDamage", 9.0D);
     }
 
     /* EXCAVATION */
@@ -775,6 +783,10 @@ public class AdvancedConfig extends BukkitConfig {
 
     public double getOreBonus(int rank) {
         return config.getDouble("Skills.Mining.BlastMining.OreBonus.Rank_" + rank);
+    }
+
+    public boolean isBlastMiningBonusDropsEnabled() {
+        return config.getBoolean("Skills.Mining.BlastMining.Bonus_Drops.Enabled", true);
     }
 
     public double getDebrisReduction(int rank) {

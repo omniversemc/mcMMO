@@ -2,14 +2,14 @@ package com.gmail.nossr50.runnables;
 
 import com.gmail.nossr50.mcMMO;
 import com.gmail.nossr50.util.BlockUtils;
+import com.gmail.nossr50.util.CancellableRunnable;
 import com.gmail.nossr50.util.MetadataConstants;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.List;
 
-public class PistonTrackerTask extends BukkitRunnable {
+public class PistonTrackerTask extends CancellableRunnable {
     private final List<Block> blocks;
     private final BlockFace direction;
     private final Block futureEmptyBlock;
@@ -35,7 +35,7 @@ public class PistonTrackerTask extends BukkitRunnable {
             Block nextBlock = b.getRelative(direction);
 
             if (nextBlock.hasMetadata(MetadataConstants.METADATA_KEY_PISTON_TRACKING)) {
-                mcMMO.getPlaceStore().setTrue(nextBlock);
+                BlockUtils.setUnnaturalBlock(nextBlock);
                 nextBlock.removeMetadata(MetadataConstants.METADATA_KEY_PISTON_TRACKING, mcMMO.p);
             }
             else if (mcMMO.getPlaceStore().isTrue(nextBlock)) {

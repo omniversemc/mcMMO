@@ -6,7 +6,6 @@ import com.gmail.nossr50.datatypes.party.ShareMode;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.party.PartyManager;
 import com.gmail.nossr50.util.player.UserManager;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -125,7 +124,7 @@ public class PartyInfoCommand implements CommandExecutor {
          * Only show members of the party that this member can see
          */
 
-        List<Player> nearMembers = PartyManager.getNearVisibleMembers(mcMMOPlayer);
+        List<Player> nearMembers = mcMMO.p.getPartyManager().getNearVisibleMembers(mcMMOPlayer);
         int membersOnline = party.getVisibleMembers(player).size();
 
         player.sendMessage(LocaleLoader.getString("Commands.Party.Members.Header"));

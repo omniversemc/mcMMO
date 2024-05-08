@@ -2,6 +2,7 @@ package com.gmail.nossr50.database;
 
 import com.gmail.nossr50.datatypes.database.DatabaseType;
 import com.gmail.nossr50.mcMMO;
+import com.gmail.nossr50.util.LogUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,6 +10,7 @@ import java.util.logging.Logger;
 
 public class DatabaseManagerFactory {
     private static Class<? extends DatabaseManager> customManager = null;
+    public static final String MYSQL_DRIVER = "com.mysql.cj.jdbc.Driver";
 
     public static DatabaseManager getDatabaseManager(@NotNull String userFilePath, @NotNull Logger logger, long purgeTime, int startingLevel) {
         if (customManager != null) {
@@ -16,17 +18,17 @@ public class DatabaseManagerFactory {
                 return createDefaultCustomDatabaseManager();
             }
             catch (Exception e) {
-                mcMMO.p.debug("Could not create custom database manager");
+                LogUtils.debug(mcMMO.p.getLogger(), "Could not create custom database manager");
                 e.printStackTrace();
             }
             catch (Throwable e) {
-                mcMMO.p.debug("Failed to create custom database manager");
+                LogUtils.debug(mcMMO.p.getLogger(), "Failed to create custom database manager");
                 e.printStackTrace();
             }
-            mcMMO.p.debug("Falling back on " + (mcMMO.p.getGeneralConfig().getUseMySQL() ? "SQL" : "Flatfile") + " database");
+            LogUtils.debug(mcMMO.p.getLogger(), "Falling back on " + (mcMMO.p.getGeneralConfig().getUseMySQL() ? "SQL" : "Flatfile") + " database");
         }
 
-        return mcMMO.p.getGeneralConfig().getUseMySQL() ? new SQLDatabaseManager() : new FlatFileDatabaseManager(userFilePath, logger, purgeTime, startingLevel);
+        return mcMMO.p.getGeneralConfig().getUseMySQL() ? new SQLDatabaseManager(logger, MYSQL_DRIVER) : new FlatFileDatabaseManager(userFilePath, logger, purgeTime, startingLevel);
     }
 
     /**
@@ -62,16 +64,16 @@ public class DatabaseManagerFactory {
     public static @Nullable DatabaseManager createDatabaseManager(@NotNull DatabaseType type, @NotNull String userFilePath, @NotNull Logger logger, long purgeTime, int startingLevel) {
         switch (type) {
             case FLATFILE:
-                mcMMO.p.getLogger().info("Using FlatFile Database");
+                LogUtils.debug(mcMMO.p.getLogger(), "Using FlatFile Database");
                 return new FlatFileDatabaseManager(userFilePath, logger, purgeTime, startingLevel);
 
             case SQL:
-                mcMMO.p.getLogger().info("Using SQL Database");
-                return new SQLDatabaseManager();
+                LogUtils.debug(mcMMO.p.getLogger(), "Using SQL Database");
+                return new SQLDatabaseManager(logger, "com.mysql.cj.jdbc.Driver");
 
             case CUSTOM:
                 try {
-                    mcMMO.p.getLogger().info("Attempting to use Custom Database");
+                    LogUtils.debug(mcMMO.p.getLogger(), "Attempting to use Custom Database");
                     return createDefaultCustomDatabaseManager();
                 }
                 catch (Throwable e) {

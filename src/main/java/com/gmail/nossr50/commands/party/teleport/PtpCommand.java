@@ -7,7 +7,6 @@ import com.gmail.nossr50.datatypes.party.PartyTeleportRecord;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.party.PartyManager;
 import com.gmail.nossr50.runnables.items.TeleportationWarmup;
 import com.gmail.nossr50.util.EventUtils;
 import com.gmail.nossr50.util.Misc;
@@ -210,7 +209,7 @@ public class PtpCommand implements TabExecutor {
             return false;
         }
 
-        if (!PartyManager.inSameParty(player, target)) {
+        if (!mcMMO.p.getPartyManager().inSameParty(player, target)) {
             player.sendMessage(LocaleLoader.getString("Party.NotInYourParty", targetName));
             return false;
         }
@@ -250,7 +249,7 @@ public class PtpCommand implements TabExecutor {
 
         if (warmup > 0) {
             teleportingPlayer.sendMessage(LocaleLoader.getString("Teleport.Commencing", warmup));
-            new TeleportationWarmup(mcMMOPlayer, mcMMOTarget).runTaskLater(mcMMO.p, 20 * warmup);
+            mcMMO.p.getFoliaLib().getImpl().runAtEntityLater(teleportingPlayer, new TeleportationWarmup(mcMMOPlayer, mcMMOTarget), 20 * warmup);
         }
         else {
             EventUtils.handlePartyTeleportEvent(teleportingPlayer, targetPlayer);

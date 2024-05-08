@@ -13,7 +13,7 @@ import com.gmail.nossr50.runnables.skills.AbilityCooldownTask;
 import com.gmail.nossr50.skills.SkillManager;
 import com.gmail.nossr50.util.*;
 import com.gmail.nossr50.util.player.NotificationManager;
-import com.gmail.nossr50.util.random.RandomChanceUtil;
+import com.gmail.nossr50.util.random.ProbabilityUtil;
 import com.gmail.nossr50.util.skills.RankUtils;
 import com.gmail.nossr50.util.skills.SkillUtils;
 import org.apache.commons.lang.math.RandomUtils;
@@ -35,7 +35,7 @@ public class MiningManager extends SkillManager {
 
     public static final String BUDDING_AMETHYST = "budding_amethyst";
 
-    public MiningManager(McMMOPlayer mcMMOPlayer) {
+    public MiningManager(@NotNull McMMOPlayer mcMMOPlayer) {
         super(mcMMOPlayer, PrimarySkillType.MINING);
     }
 
@@ -70,6 +70,11 @@ public class MiningManager extends SkillManager {
         return RankUtils.hasUnlockedSubskill(getPlayer(), SubSkillType.MINING_DOUBLE_DROPS) && Permissions.isSubSkillEnabled(getPlayer(), SubSkillType.MINING_DOUBLE_DROPS);
     }
 
+    public boolean canMotherLode() {
+        return Permissions.canUseSubSkill(getPlayer(), SubSkillType.MINING_MOTHER_LODE);
+    }
+
+
     /**
      * Process double drops & XP gain for Mining.
      *
@@ -96,9 +101,32 @@ public class MiningManager extends SkillManager {
         if(silkTouch && !mcMMO.p.getAdvancedConfig().getDoubleDropSilkTouchEnabled())
             return;
 
+        //Mining mastery allows for a chance of triple drops
+        if(canMotherLode()) {
+            //Triple Drops failed so do a normal double drops check
+            if(!processTripleDrops(blockState)) {
+                processDoubleDrops(blockState);
+            }
+        } else {
+            //If the user has no mastery, proceed with normal double drop routine
+            processDoubleDrops(blockState);
+        }
+    }
+
+    private boolean processTripleDrops(@NotNull BlockState blockState) {
         //TODO: Make this readable
-        if (RandomChanceUtil.checkRandomChanceExecutionSuccess(getPlayer(), SubSkillType.MINING_DOUBLE_DROPS, true)) {
-            boolean useTriple = mmoPlayer.getAbilityMode(mcMMO.p.getSkillTools().getSuperAbility(skill)) && mcMMO.p.getAdvancedConfig().getAllowMiningTripleDrops();
+        if (ProbabilityUtil.isSkillRNGSuccessful(SubSkillType.MINING_MOTHER_LODE, getPlayer())) {
+            BlockUtils.markDropsAsBonus(blockState, 2);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void processDoubleDrops(@NotNull BlockState blockState) {
+        //TODO: Make this readable
+        if (ProbabilityUtil.isSkillRNGSuccessful(SubSkillType.MINING_DOUBLE_DROPS, getPlayer())) {
+            boolean useTriple = mmoPlayer.getAbilityMode(SuperAbilityType.SUPER_BREAKER) && mcMMO.p.getAdvancedConfig().getAllowMiningTripleDrops();
             BlockUtils.markDropsAsBonus(blockState, useTriple);
         }
     }
@@ -111,7 +139,7 @@ public class MiningManager extends SkillManager {
         Block targetBlock = player.getTargetBlock(BlockUtils.getTransparentBlocks(), BlastMining.MAXIMUM_REMOTE_DETONATION_DISTANCE);
 
         //Blast mining cooldown check needs to be first so the player can be messaged
-        if (!blastMiningCooldownOver() || targetBlock.getType() != Material.TNT || !EventUtils.simulateBlockBreak(targetBlock, player, true)) {
+        if (!blastMiningCooldownOver() || targetBlock.getType() != Material.TNT || !EventUtils.simulateBlockBreak(targetBlock, player)) {
             return;
         }
 
@@ -130,7 +158,7 @@ public class MiningManager extends SkillManager {
 
         mmoPlayer.setAbilityDATS(SuperAbilityType.BLAST_MINING, System.currentTimeMillis());
         mmoPlayer.setAbilityInformed(SuperAbilityType.BLAST_MINING, false);
-        new AbilityCooldownTask(mmoPlayer, SuperAbilityType.BLAST_MINING).runTaskLater(mcMMO.p, (long) SuperAbilityType.BLAST_MINING.getCooldown() * Misc.TICK_CONVERSION_FACTOR);
+        mcMMO.p.getFoliaLib().getImpl().runAtEntityLater(mmoPlayer.getPlayer(), new AbilityCooldownTask(mmoPlayer, SuperAbilityType.BLAST_MINING), (long) SuperAbilityType.BLAST_MINING.getCooldown() * Misc.TICK_CONVERSION_FACTOR);
     }
 
     /**
@@ -188,7 +216,7 @@ public class MiningManager extends SkillManager {
 
                 Misc.spawnItem(getPlayer(), Misc.getBlockCenter(blockState), new ItemStack(blockState.getType()), ItemSpawnReason.BLAST_MINING_ORES); // Initial block that would have been dropped
 
-                if (!mcMMO.getPlaceStore().isTrue(blockState)) {
+                if (mcMMO.p.getAdvancedConfig().isBlastMiningBonusDropsEnabled() && !mcMMO.getPlaceStore().isTrue(blockState)) {
                     for (int i = 1; i < dropMultiplier; i++) {
 //                        Bukkit.broadcastMessage("Bonus Drop on Ore: "+blockState.getType().toString());
                         Misc.spawnItem(getPlayer(), Misc.getBlockCenter(blockState), new ItemStack(blockState.getType()), ItemSpawnReason.BLAST_MINING_ORES_BONUS_DROP); // Initial block that would have been dropped
@@ -275,21 +303,16 @@ public class MiningManager extends SkillManager {
      * @return the Blast Mining tier
      */
     public int getDropMultiplier() {
-        switch(getBlastMiningTier()) {
-            case 8:
-            case 7:
-                return 3;
-            case 6:
-            case 5:
-            case 4:
-            case 3:
-                return 2;
-            case 2:
-            case 1:
-                return 1;
-            default:
-                return 0;
+        if (!mcMMO.p.getAdvancedConfig().isBlastMiningBonusDropsEnabled()) {
+            return 0;
         }
+
+        return switch (getBlastMiningTier()) {
+            case 8, 7 -> 3;
+            case 6, 5, 4, 3 -> 2;
+            case 2, 1 -> 1;
+            default -> 0;
+        };
     }
 
     /**

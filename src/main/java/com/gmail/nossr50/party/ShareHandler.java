@@ -35,7 +35,7 @@ public final class ShareHandler {
             return false;
         }
 
-        List<Player> nearMembers = PartyManager.getNearVisibleMembers(mcMMOPlayer);
+        List<Player> nearMembers = mcMMO.p.getPartyManager().getNearVisibleMembers(mcMMOPlayer);
 
         if (nearMembers.isEmpty()) {
             return false;
@@ -44,7 +44,9 @@ public final class ShareHandler {
         nearMembers.add(mcMMOPlayer.getPlayer());
 
         int partySize = nearMembers.size();
-        double shareBonus = Math.min(mcMMO.p.getGeneralConfig().getPartyShareBonusBase() + (partySize * mcMMO.p.getGeneralConfig().getPartyShareBonusIncrease()), mcMMO.p.getGeneralConfig().getPartyShareBonusCap());
+        double shareBonus = Math.min(mcMMO.p.getGeneralConfig().getPartyShareBonusBase()
+                + (partySize * mcMMO.p.getGeneralConfig().getPartyShareBonusIncrease()),
+                mcMMO.p.getGeneralConfig().getPartyShareBonusCap());
         float splitXp = (float) (xp / partySize * shareBonus);
 
         for (Player member : nearMembers) {
@@ -87,7 +89,7 @@ public final class ShareHandler {
             return false;
         }
 
-        List<Player> nearMembers = PartyManager.getNearMembers(mcMMOPlayer);
+        List<Player> nearMembers = mcMMO.p.getPartyManager().getNearMembers(mcMMOPlayer);
 
         if (nearMembers.isEmpty()) {
             return false;

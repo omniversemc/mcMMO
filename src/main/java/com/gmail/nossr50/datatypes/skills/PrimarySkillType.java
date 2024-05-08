@@ -16,51 +16,20 @@ public enum PrimarySkillType {
     ALCHEMY,
     ARCHERY,
     AXES,
+    CROSSBOWS,
     EXCAVATION,
     FISHING,
     HERBALISM,
+    MACES,
     MINING,
     REPAIR,
     SALVAGE,
     SMELTING,
     SWORDS,
     TAMING,
+    TRIDENTS,
     UNARMED,
     WOODCUTTING;
-//    boolean issueWarning = true;
-
-    /*
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     *  Everything below here will be removed in 2.2 (Tridents & Crossbows)
-     */
-
-
-//    private void processWarning() {
-//        if(issueWarning) {
-//            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-//            Bukkit.getScheduler().scheduleSyncDelayedTask(mcMMO.p, () -> {
-//                mcMMO.p.getLogger().severe("A plugin that hooks into mcMMO via the mcMMO API is using soon to be deprecated API calls. Contact the plugin author and inform them to update their code before it breaks.");
-//                mcMMO.p.getLogger().severe("Deprecation Call from: " + stackTraceElements[2].toString());
-//                mcMMO.p.getLogger().severe("This warning will not repeat itself. Nothing is broken for now, but in the future it will be.");
-//            });
-//
-//            issueWarning = !issueWarning;
-//        }
-//    }
 
     /**
      * WARNING: Being removed in an upcoming update, you should be using mcMMO.getSkillTools() instead
@@ -164,12 +133,12 @@ public enum PrimarySkillType {
     /**
      * WARNING: Being removed in an upcoming update, you should be using mcMMO.getSkillTools() instead
      * @return the max level of this skill
-     * @see SkillTools#getXpModifier(com.gmail.nossr50.datatypes.skills.PrimarySkillType)
+     * @see SkillTools#getXpMultiplier(com.gmail.nossr50.datatypes.skills.PrimarySkillType)
      * @deprecated this is being removed in an upcoming update, you should be using mcMMO.getSkillTools() instead
      */
     @Deprecated
     public double getXpModifier() {
-        return mcMMO.p.getSkillTools().getXpModifier(this);
+        return mcMMO.p.getSkillTools().getXpMultiplier(this);
     }
 
     /**

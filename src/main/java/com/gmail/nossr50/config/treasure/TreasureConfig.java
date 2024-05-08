@@ -4,6 +4,9 @@ import com.gmail.nossr50.config.BukkitConfig;
 import com.gmail.nossr50.datatypes.treasure.ExcavationTreasure;
 import com.gmail.nossr50.datatypes.treasure.HylianTreasure;
 import com.gmail.nossr50.mcMMO;
+import com.gmail.nossr50.util.BlockUtils;
+import com.gmail.nossr50.util.LogUtils;
+import com.gmail.nossr50.util.PotionUtil;
 import com.gmail.nossr50.util.text.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -12,7 +15,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 
 import java.io.IOException;
@@ -35,7 +37,7 @@ public class TreasureConfig extends BukkitConfig {
     public HashMap<String, List<HylianTreasure>> hylianMap = new HashMap<>();
 
     private TreasureConfig() {
-        super(FILENAME);
+        super(FILENAME, false);
         loadKeys();
         validate();
     }
@@ -163,22 +165,33 @@ public class TreasureConfig extends BukkitConfig {
                 Material mat = Material.matchMaterial(materialName);
                 if (mat == null) {
                     reason.add("Potion format for " + FILENAME + " has changed");
+                    continue;
                 } else {
                     item = new ItemStack(mat, amount, data);
-                    PotionMeta itemMeta = (PotionMeta) item.getItemMeta();
-
-                    PotionType potionType = null;
-                    try {
-                        potionType = PotionType.valueOf(config.getString(type + "." + treasureName + ".PotionData.PotionType", "WATER"));
-                    } catch (IllegalArgumentException ex) {
-                        reason.add("Invalid Potion_Type: " + config.getString(type + "." + treasureName + ".PotionData.PotionType", "WATER"));
+                    PotionMeta potionMeta = (PotionMeta) item.getItemMeta();
+                    if (potionMeta == null) {
+                        mcMMO.p.getLogger().severe("Item meta when adding potion to treasure was null, contact the mcMMO devs!");
+                        reason.add("Item meta when adding potion to treasure was null, contact the mcMMO devs!");
+                        continue;
                     }
+
+                    String potionTypeStr;
+                    potionTypeStr = config.getString(type + "." + treasureName + ".PotionData.PotionType", "WATER");
                     boolean extended = config.getBoolean(type + "." + treasureName + ".PotionData.Extended", false);
                     boolean upgraded = config.getBoolean(type + "." + treasureName + ".PotionData.Upgraded", false);
-                    itemMeta.setBasePotionData(new PotionData(potionType, extended, upgraded));
+                    PotionType potionType = PotionUtil.matchPotionType(potionTypeStr, extended, upgraded);
+
+                    if (potionType == null) {
+                        reason.add("Could not derive potion type from: " + potionTypeStr +", " + extended + ", " + upgraded);
+                        continue;
+                    }
+
+                    // Set the base potion type
+                    // NOTE: extended/upgraded are ignored in 1.20.5 and later
+                    PotionUtil.setBasePotionType(potionMeta, potionType, extended, upgraded);
 
                     if (config.contains(type + "." + treasureName + ".Custom_Name")) {
-                        itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', config.getString(type + "." + treasureName + ".Custom_Name")));
+                        potionMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', config.getString(type + "." + treasureName + ".Custom_Name")));
                     }
 
                     if (config.contains(type + "." + treasureName + ".Lore")) {
@@ -186,9 +199,9 @@ public class TreasureConfig extends BukkitConfig {
                         for (String s : config.getStringList(type + "." + treasureName + ".Lore")) {
                             lore.add(ChatColor.translateAlternateColorCodes('&', s));
                         }
-                        itemMeta.setLore(lore);
+                        potionMeta.setLore(lore);
                     }
-                    item.setItemMeta(itemMeta);
+                    item.setItemMeta(potionMeta);
                 }
             } else if (material != null) {
                 item = new ItemStack(material, amount, data);
@@ -227,7 +240,7 @@ public class TreasureConfig extends BukkitConfig {
                     for (String dropper : dropList) {
                         if (dropper.equals("Bushes")) {
                             AddHylianTreasure(StringUtils.getFriendlyConfigMaterialString(Material.FERN), hylianTreasure);
-                            AddHylianTreasure(StringUtils.getFriendlyConfigMaterialString(Material.TALL_GRASS), hylianTreasure);
+                            AddHylianTreasure(StringUtils.getFriendlyConfigMaterialString(BlockUtils.getShortGrass()), hylianTreasure);
                             for (Material species : Tag.SAPLINGS.getValues())
                                 AddHylianTreasure(StringUtils.getFriendlyConfigMaterialString(species), hylianTreasure);
 
@@ -272,14 +285,14 @@ public class TreasureConfig extends BukkitConfig {
             case LEGACY:
                 int legacyDropLevel = getWrongKeyValue(type, treasureName, conversionType); //Legacy only had one value, Retro Mode didn't have a setting
                 //Config needs to be updated to be more specific
-                mcMMO.p.getLogger().info("(" + treasureName + ") [Fixing bad address: Legacy] Converting Drop_Level to Level_Requirement in treasures.yml for treasure to match new expected format");
+                LogUtils.debug(mcMMO.p.getLogger(), "(" + treasureName + ") [Fixing bad address: Legacy] Converting Drop_Level to Level_Requirement in treasures.yml for treasure to match new expected format");
                 config.set(type + "." + treasureName + LEGACY_DROP_LEVEL, null); //Remove legacy entry
                 config.set(type + "." + treasureName + LEVEL_REQUIREMENT_RETRO_MODE, legacyDropLevel * 10); //Multiply by 10 for Retro
                 config.set(type + "." + treasureName + LEVEL_REQUIREMENT_STANDARD_MODE, legacyDropLevel);
                 shouldWeUpdateTheFile = true;
                 break;
             case WRONG_KEY_STANDARD:
-                mcMMO.p.getLogger().info("(" + treasureName + ") [Fixing bad address: STANDARD] Converting Drop_Level to Level_Requirement in treasures.yml for treasure to match new expected format");
+                LogUtils.debug(mcMMO.p.getLogger(), "(" + treasureName + ") [Fixing bad address: STANDARD] Converting Drop_Level to Level_Requirement in treasures.yml for treasure to match new expected format");
                 int wrongKeyValueStandard = getWrongKeyValue(type, treasureName, conversionType);
                 config.set(type + "." + treasureName + WRONG_KEY_ROOT, null); //We also kill the Retro key here as we have enough information for setting in values if needed
 
@@ -291,7 +304,7 @@ public class TreasureConfig extends BukkitConfig {
                 shouldWeUpdateTheFile = true;
                 break;
             case WRONG_KEY_RETRO:
-                mcMMO.p.getLogger().info("(" + treasureName + ") [Fixing bad address: RETRO] Converting Drop_Level to Level_Requirement in treasures.yml for treasure to match new expected format");
+                LogUtils.debug(mcMMO.p.getLogger(), "(" + treasureName + ") [Fixing bad address: RETRO] Converting Drop_Level to Level_Requirement in treasures.yml for treasure to match new expected format");
                 int wrongKeyValueRetro = getWrongKeyValue(type, treasureName, conversionType);
                 config.set(type + "." + treasureName + WRONG_KEY_ROOT, null); //We also kill the Retro key here as we have enough information for setting in values if needed
 

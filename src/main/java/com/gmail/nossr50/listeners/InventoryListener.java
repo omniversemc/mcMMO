@@ -16,7 +16,6 @@ import com.gmail.nossr50.util.player.UserManager;
 import com.gmail.nossr50.util.skills.SkillUtils;
 import com.gmail.nossr50.worldguard.WorldGuardManager;
 import com.gmail.nossr50.worldguard.WorldGuardUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -440,7 +439,7 @@ public class InventoryListener implements Listener {
                 return;
         }
 
-        new PlayerUpdateInventoryTask((Player) whoClicked).runTaskLater(plugin, 0);
+        mcMMO.p.getFoliaLib().getImpl().runAtEntity(whoClicked, new PlayerUpdateInventoryTask((Player) whoClicked));
     }
 
 }

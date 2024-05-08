@@ -11,7 +11,6 @@ import com.gmail.nossr50.datatypes.chat.ChatChannel;
 import com.gmail.nossr50.datatypes.party.Party;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.party.PartyManager;
 import com.gmail.nossr50.util.player.UserManager;
 import com.gmail.nossr50.util.text.StringUtils;
 import org.bukkit.entity.Player;
@@ -78,7 +77,7 @@ public class PartyChatCommand extends BaseCommand {
             mcMMO.p.getLogger().severe("You need to specify a party name and then write a message afterwards.");
         } else {
             //Grab party
-            Party targetParty = PartyManager.getParty(args[0]);
+            Party targetParty = mcMMO.p.getPartyManager().getParty(args[0]);
 
             if(targetParty != null) {
                 pluginRef.getChatManager().processConsoleMessage(StringUtils.buildStringAfterNthElement(args, 1), targetParty);

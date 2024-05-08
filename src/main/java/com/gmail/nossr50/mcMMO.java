@@ -8,6 +8,7 @@ import com.gmail.nossr50.config.mods.ArmorConfigManager;
 import com.gmail.nossr50.config.mods.BlockConfigManager;
 import com.gmail.nossr50.config.mods.EntityConfigManager;
 import com.gmail.nossr50.config.mods.ToolConfigManager;
+import com.gmail.nossr50.config.party.PartyConfig;
 import com.gmail.nossr50.config.skills.alchemy.PotionConfig;
 import com.gmail.nossr50.config.skills.repair.RepairConfigManager;
 import com.gmail.nossr50.config.skills.salvage.SalvageConfigManager;
@@ -20,6 +21,7 @@ import com.gmail.nossr50.datatypes.skills.subskills.acrobatics.Roll;
 import com.gmail.nossr50.listeners.*;
 import com.gmail.nossr50.metadata.MetadataService;
 import com.gmail.nossr50.party.PartyManager;
+import com.gmail.nossr50.placeholders.PapiExpansion;
 import com.gmail.nossr50.runnables.SaveTimerTask;
 import com.gmail.nossr50.runnables.backups.CleanBackupsTask;
 import com.gmail.nossr50.runnables.commands.NotifySquelchReminderTask;
@@ -29,7 +31,6 @@ import com.gmail.nossr50.runnables.player.ClearRegisteredXPGainTask;
 import com.gmail.nossr50.runnables.player.PlayerProfileLoadingTask;
 import com.gmail.nossr50.runnables.player.PowerLevelUpdatingTask;
 import com.gmail.nossr50.skills.alchemy.Alchemy;
-import com.gmail.nossr50.skills.child.ChildConfig;
 import com.gmail.nossr50.skills.repair.repairables.Repairable;
 import com.gmail.nossr50.skills.repair.repairables.RepairableManager;
 import com.gmail.nossr50.skills.repair.repairables.SimpleRepairableManager;
@@ -52,6 +53,8 @@ import com.gmail.nossr50.util.skills.SkillTools;
 import com.gmail.nossr50.util.skills.SmeltingTracker;
 import com.gmail.nossr50.util.upgrade.UpgradeManager;
 import com.gmail.nossr50.worldguard.WorldGuardManager;
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.util.InvalidTickDelayNotifier;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.shatteredlands.shatt.backup.ZipLibrary;
 import org.bstats.bukkit.Metrics;
@@ -68,7 +71,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -76,8 +78,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class mcMMO extends JavaPlugin {
-
-
     /* Managers & Services */
     private static PlatformManager platformManager;
     private static MetadataService metadataService;
@@ -95,8 +95,9 @@ public class mcMMO extends JavaPlugin {
     private static ChatManager chatManager;
     private static CommandManager commandManager; //ACF
     private static TransientEntityTracker transientEntityTracker;
+//    private static ProtocolLibManager protocolLibManager;
 
-    private @NotNull SkillTools skillTools;
+    private SkillTools skillTools;
 
     private static boolean serverShutdownExecuted = false;
 
@@ -137,15 +138,14 @@ public class mcMMO extends JavaPlugin {
 
     private GeneralConfig generalConfig;
     private AdvancedConfig advancedConfig;
-//    private RepairConfig repairConfig;
-//    private SalvageConfig salvageConfig;
-//    private PersistentDataConfig persistentDataConfig;
-//    private ChatConfig chatConfig;
-//    private CoreSkillsConfig coreSkillsConfig;
-//    private RankConfig rankConfig;
-//    private TreasureConfig treasureConfig;
-//    private FishingTreasureConfig fishingTreasureConfig;
-//    private SoundConfig soundConfig;
+    private PartyConfig partyConfig;
+    private PotionConfig potionConfig;
+    private CustomItemSupportConfig customItemSupportConfig;
+    private EnchantmentMapper enchantmentMapper;
+    private AttributeMapper attributeMapper;
+
+    private FoliaLib foliaLib;
+    private PartyManager partyManager;
 
     public mcMMO() {
         p = this;
@@ -164,12 +164,21 @@ public class mcMMO extends JavaPlugin {
     @Override
     public void onEnable() {
         try {
+            //Filter out any debug messages (if debug/verbose logging is not enabled)
+            getLogger().setFilter(new LogFilter(this));
+
+            //Folia lib plugin instance
+            foliaLib = new FoliaLib(this);
+            InvalidTickDelayNotifier.disableNotifications = true;
+
             setupFilePaths();
             generalConfig = new GeneralConfig(getDataFolder()); //Load before skillTools
             skillTools = new SkillTools(this); //Load after general config
 
             //Init configs
             advancedConfig = new AdvancedConfig(getDataFolder());
+            partyConfig = new PartyConfig(getDataFolder());
+            customItemSupportConfig = new CustomItemSupportConfig(getDataFolder());
 
             //Store this value so other plugins can check it
             isRetroModeEnabled = generalConfig.getIsRetroMode();
@@ -180,9 +189,6 @@ public class mcMMO extends JavaPlugin {
             //metadata service
             metadataService = new MetadataService(this);
 
-            //Filter out any debug messages (if debug/verbose logging is not enabled)
-            getLogger().setFilter(new LogFilter(this));
-
             MetadataConstants.MCMMO_METADATA_VALUE = new FixedMetadataValue(this, true);
 
             PluginManager pluginManager = getServer().getPluginManager();
@@ -191,11 +197,13 @@ public class mcMMO extends JavaPlugin {
 
             upgradeManager = new UpgradeManager();
 
-
             modManager = new ModManager();
 
-            //Init Material Maps
+            // Init Material Maps
             materialMapStore = new MaterialMapStore();
+            // Init compatibility mappers
+            enchantmentMapper = new EnchantmentMapper(this);
+            attributeMapper = new AttributeMapper(this);
 
             loadConfigFiles();
 
@@ -230,33 +238,39 @@ public class mcMMO extends JavaPlugin {
 
             if(serverAPIOutdated)
             {
-                Bukkit
-                        .getScheduler()
-                        .scheduleSyncRepeatingTask(this,
+                foliaLib
+                        .getImpl()
+                        .runTimer(
                                 () -> getLogger().severe("You are running an outdated version of "+platformManager.getServerSoftware()+", mcMMO will not work unless you update to a newer version!"),
-                        20, 20*60*30);
+                                20, 20*60*30
+                        );
 
                 if(platformManager.getServerSoftware() == ServerSoftwareType.CRAFT_BUKKIT)
                 {
-                    Bukkit.getScheduler()
-                            .scheduleSyncRepeatingTask(this,
+                    foliaLib
+                            .getImpl()
+                            .runTimer(
                                     () -> getLogger().severe("We have detected you are using incompatible server software, our best guess is that you are using CraftBukkit. mcMMO requires Spigot or Paper, if you are not using CraftBukkit, you will still need to update your custom server software before mcMMO will work."),
-                    20, 20*60*30);
+                                    20, 20*60*30
+                            );
                 }
             } else {
                 registerEvents();
                 registerCoreSkills();
                 registerCustomRecipes();
 
-                PartyManager.loadParties();
+                if (partyConfig.isPartyEnabled()) {
+                    partyManager = new PartyManager(this);
+                    partyManager.loadParties();
+                }
 
                 formulaManager = new FormulaManager();
 
                 for (Player player : getServer().getOnlinePlayers()) {
-                    new PlayerProfileLoadingTask(player).runTaskLaterAsynchronously(mcMMO.p, 1); // 1 Tick delay to ensure the player is marked as online before we begin loading
+                    getFoliaLib().getImpl().runLaterAsync(new PlayerProfileLoadingTask(player), 1); // 1 Tick delay to ensure the player is marked as online before we begin loading
                 }
 
-                debug("Version " + getDescription().getVersion() + " is enabled!");
+                LogUtils.debug(mcMMO.p.getLogger(), "Version " + getDescription().getVersion() + " is enabled!");
 
                 scheduleTasks();
                 CommandRegistrationManager.registerCommands();
@@ -283,9 +297,7 @@ public class mcMMO extends JavaPlugin {
                 else
                     metrics.addCustomChart(new SimplePie("leveling_system", () -> "Standard"));
             }
-        }
-
-        catch (Throwable t) {
+        } catch (Throwable t) {
             getLogger().severe("There was an error while enabling mcMMO!");
 
             if (!(t instanceof ExceptionInInitializerError)) {
@@ -321,6 +333,10 @@ public class mcMMO extends JavaPlugin {
 
         transientEntityTracker = new TransientEntityTracker();
         setServerShutdown(false); //Reset flag, used to make decisions about async saves
+
+        if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new PapiExpansion().register();
+        }
     }
 
     public static PlayerLevelUtils getPlayerLevelUtils() {
@@ -349,6 +365,9 @@ public class mcMMO extends JavaPlugin {
         if(getServer().getPluginManager().getPlugin("WorldGuard") != null) {
             WorldGuardManager.getInstance().registerFlags();
         }
+
+        // ProtocolLib
+        // protocolLibManager = new ProtocolLibManager(this);
     }
 
     /**
@@ -364,7 +383,8 @@ public class mcMMO extends JavaPlugin {
             UserManager.saveAll();      // Make sure to save player information if the server shuts down
             UserManager.clearAll();
             Alchemy.finishAllBrews();   // Finish all partially complete AlchemyBrewTasks to prevent vanilla brewing continuation on restart
-            PartyManager.saveParties(); // Save our parties
+            if(partyConfig.isPartyEnabled())
+                getPartyManager().saveParties(); // Save our parties
 
             //TODO: Needed?
             if(generalConfig.getScoreboardsEnabled())
@@ -389,13 +409,13 @@ public class mcMMO extends JavaPlugin {
             }
         }
 
-        debug("Canceling all tasks...");
-        getServer().getScheduler().cancelTasks(this); // This removes our tasks
-        debug("Unregister all events...");
+        LogUtils.debug(mcMMO.p.getLogger(), "Canceling all tasks...");
+        getFoliaLib().getImpl().cancelAllTasks(); // This removes our tasks
+        LogUtils.debug(mcMMO.p.getLogger(), "Unregister all events...");
         HandlerList.unregisterAll(this); // Cancel event registrations
 
         databaseManager.onDisable();
-        debug("Was disabled."); // How informative!
+        LogUtils.debug(mcMMO.p.getLogger(), "Was disabled."); // How informative!
     }
 
     public static String getMainDirectory() {
@@ -428,10 +448,6 @@ public class mcMMO extends JavaPlugin {
 
     public void toggleXpEventEnabled() {
         xpEventEnabled = !xpEventEnabled;
-    }
-
-    public void debug(String message) {
-        getLogger().info("[Debug] " + message);
     }
 
     public static FormulaManager getFormulaManager() {
@@ -549,12 +565,14 @@ public class mcMMO extends JavaPlugin {
         FishingTreasureConfig.getInstance();
         HiddenConfig.getInstance();
         mcMMO.p.getAdvancedConfig();
-        PotionConfig.getInstance();
+
+        // init potion config
+        potionConfig = new PotionConfig();
+        potionConfig.loadPotions();
+
         CoreSkillsConfig.getInstance();
         SoundConfig.getInstance();
         RankConfig.getInstance();
-
-        new ChildConfig();
 
         List<Repairable> repairables = new ArrayList<>();
 
@@ -614,7 +632,7 @@ public class mcMMO extends JavaPlugin {
 
         if(CoreSkillsConfig.getInstance().isPrimarySkillEnabled(PrimarySkillType.ACROBATICS))
         {
-            getLogger().info("Enabling Acrobatics Skills");
+            LogUtils.debug(mcMMO.p.getLogger(), "Enabling Acrobatics Skills");
 
             //TODO: Should do this differently
             Roll roll = new Roll();
@@ -624,7 +642,7 @@ public class mcMMO extends JavaPlugin {
     }
 
     private void registerCustomRecipes() {
-        getServer().getScheduler().scheduleSyncDelayedTask(this, () -> {
+        getFoliaLib().getImpl().runLater(() -> {
             if (generalConfig.getChimaeraEnabled()) {
                 getServer().addRecipe(ChimaeraWing.getChimaeraWingRecipe());
             }
@@ -638,42 +656,43 @@ public class mcMMO extends JavaPlugin {
 
         long saveIntervalTicks = Math.max(minute, generalConfig.getSaveInterval() * minute);
 
-        new SaveTimerTask().runTaskTimer(this, saveIntervalTicks, saveIntervalTicks);
+        getFoliaLib().getImpl().runTimer(new SaveTimerTask(), saveIntervalTicks, saveIntervalTicks);
 
         // Cleanup the backups folder
-        new CleanBackupsTask().runTaskAsynchronously(mcMMO.p);
+        getFoliaLib().getImpl().runAsync(new CleanBackupsTask());
 
         // Old & Powerless User remover
         long purgeIntervalTicks = generalConfig.getPurgeInterval() * 60L * 60L * Misc.TICK_CONVERSION_FACTOR;
 
         if (purgeIntervalTicks == 0) {
-            new UserPurgeTask().runTaskLaterAsynchronously(this, 2 * Misc.TICK_CONVERSION_FACTOR); // Start 2 seconds after startup.
+            getFoliaLib().getImpl().runLaterAsync(new UserPurgeTask(), 2 * Misc.TICK_CONVERSION_FACTOR); // Start 2 seconds after startup.
         }
         else if (purgeIntervalTicks > 0) {
-            new UserPurgeTask().runTaskTimerAsynchronously(this, purgeIntervalTicks, purgeIntervalTicks);
+            getFoliaLib().getImpl().runTimerAsync(new UserPurgeTask(), purgeIntervalTicks, purgeIntervalTicks);
         }
 
         // Automatically remove old members from parties
-        long kickIntervalTicks = generalConfig.getAutoPartyKickInterval() * 60L * 60L * Misc.TICK_CONVERSION_FACTOR;
+        if(partyConfig.isPartyEnabled()) {
+            long kickIntervalTicks = generalConfig.getAutoPartyKickInterval() * 60L * 60L * Misc.TICK_CONVERSION_FACTOR;
 
-        if (kickIntervalTicks == 0) {
-            new PartyAutoKickTask().runTaskLater(this, 2 * Misc.TICK_CONVERSION_FACTOR); // Start 2 seconds after startup.
-        }
-        else if (kickIntervalTicks > 0) {
-            new PartyAutoKickTask().runTaskTimer(this, kickIntervalTicks, kickIntervalTicks);
+            if (kickIntervalTicks == 0) {
+                getFoliaLib().getImpl().runLater(new PartyAutoKickTask(), 2 * Misc.TICK_CONVERSION_FACTOR); // Start 2 seconds after startup.
+            } else if (kickIntervalTicks > 0) {
+                getFoliaLib().getImpl().runTimer(new PartyAutoKickTask(), kickIntervalTicks, kickIntervalTicks);
+            }
         }
 
         // Update power level tag scoreboards
-        new PowerLevelUpdatingTask().runTaskTimer(this, 2 * Misc.TICK_CONVERSION_FACTOR, 2 * Misc.TICK_CONVERSION_FACTOR);
+        getFoliaLib().getImpl().runTimer(new PowerLevelUpdatingTask(), 2 * Misc.TICK_CONVERSION_FACTOR, 2 * Misc.TICK_CONVERSION_FACTOR);
 
         // Clear the registered XP data so players can earn XP again
         if (ExperienceConfig.getInstance().getDiminishedReturnsEnabled()) {
-            new ClearRegisteredXPGainTask().runTaskTimer(this, 60, 60);
+            getFoliaLib().getImpl().runTimer(new ClearRegisteredXPGainTask(), 60, 60);
         }
 
         if(mcMMO.p.getAdvancedConfig().allowPlayerTips())
         {
-            new NotifySquelchReminderTask().runTaskTimer(this, 60, ((20 * 60) * 60));
+            getFoliaLib().getImpl().runTimer(new NotifySquelchReminderTask(), 60, ((20 * 60) * 60));
         }
     }
 
@@ -773,4 +792,45 @@ public class mcMMO extends JavaPlugin {
     public @NotNull AdvancedConfig getAdvancedConfig() {
         return advancedConfig;
     }
+
+    public @NotNull PartyConfig getPartyConfig() {
+        return partyConfig;
+    }
+
+    /**
+     * Check if the party system is enabled
+     *
+     * @return true if the party system is enabled, false otherwise
+     */
+    public boolean isPartySystemEnabled() {
+        return partyConfig.isPartyEnabled();
+    }
+
+    public PartyManager getPartyManager() {
+        return partyManager;
+    }
+
+    public CustomItemSupportConfig getCustomItemSupportConfig() {
+        return customItemSupportConfig;
+    }
+
+    public PotionConfig getPotionConfig() {
+        return potionConfig;
+    }
+
+    public EnchantmentMapper getEnchantmentMapper() {
+        return enchantmentMapper;
+    }
+
+    public AttributeMapper getAttributeMapper() {
+        return attributeMapper;
+    }
+
+    public @NotNull FoliaLib getFoliaLib() {
+        return foliaLib;
+    }
+
+//    public ProtocolLibManager getProtocolLibManager() {
+//        return protocolLibManager;
+//    }
 }

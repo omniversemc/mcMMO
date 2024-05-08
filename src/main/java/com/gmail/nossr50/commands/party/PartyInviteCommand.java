@@ -4,7 +4,6 @@ import com.gmail.nossr50.datatypes.party.Party;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.party.PartyManager;
 import com.gmail.nossr50.util.commands.CommandUtils;
 import com.gmail.nossr50.util.player.UserManager;
 import org.bukkit.command.Command;
@@ -40,19 +39,19 @@ public class PartyInviteCommand implements CommandExecutor {
                 return true;
             }
 
-            if (PartyManager.inSameParty(player, target)) {
+            if (mcMMO.p.getPartyManager().inSameParty(player, target)) {
                 sender.sendMessage(LocaleLoader.getString("Party.Player.InSameParty", targetName));
                 return true;
             }
 
-            if (!PartyManager.canInvite(mcMMOPlayer)) {
+            if (!mcMMO.p.getPartyManager().canInvite(mcMMOPlayer)) {
                 player.sendMessage(LocaleLoader.getString("Party.Locked"));
                 return true;
             }
 
             Party playerParty = mcMMOPlayer.getParty();
 
-            if (PartyManager.isPartyFull(target, playerParty)) {
+            if (mcMMO.p.getPartyManager().isPartyFull(target, playerParty)) {
                 player.sendMessage(LocaleLoader.getString("Commands.Party.PartyFull.Invite", target.getName(), playerParty.toString(), mcMMO.p.getGeneralConfig().getPartyMaxSize()));
                 return true;
             }

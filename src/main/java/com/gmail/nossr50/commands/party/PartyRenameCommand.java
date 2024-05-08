@@ -4,7 +4,7 @@ import com.gmail.nossr50.datatypes.party.Party;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.events.party.McMMOPartyChangeEvent.EventReason;
 import com.gmail.nossr50.locale.LocaleLoader;
-import com.gmail.nossr50.party.PartyManager;
+import com.gmail.nossr50.mcMMO;
 import com.gmail.nossr50.util.player.UserManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -25,7 +25,7 @@ public class PartyRenameCommand implements CommandExecutor {
             Party playerParty = mcMMOPlayer.getParty();
 
             String oldPartyName = playerParty.getName();
-            String newPartyName = args[1];
+            String newPartyName = args[1].replace(".", "");
 
             // This is to prevent party leaders from spamming other players with the rename message
             if (oldPartyName.equalsIgnoreCase(newPartyName)) {
@@ -36,14 +36,14 @@ public class PartyRenameCommand implements CommandExecutor {
             Player player = mcMMOPlayer.getPlayer();
 
             // Check to see if the party exists, and if it does cancel renaming the party
-            if (PartyManager.checkPartyExistence(player, newPartyName)) {
+            if (mcMMO.p.getPartyManager().checkPartyExistence(player, newPartyName)) {
                 return true;
             }
 
             String leaderName = playerParty.getLeader().getPlayerName();
 
             for (Player member : playerParty.getOnlineMembers()) {
-                if (!PartyManager.handlePartyChangeEvent(member, oldPartyName, newPartyName, EventReason.CHANGED_PARTIES)) {
+                if (!mcMMO.p.getPartyManager().handlePartyChangeEvent(member, oldPartyName, newPartyName, EventReason.CHANGED_PARTIES)) {
                     return true;
                 }
 

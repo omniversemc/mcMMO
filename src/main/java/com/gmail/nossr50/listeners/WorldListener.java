@@ -1,10 +1,7 @@
 package com.gmail.nossr50.listeners;
 
 import com.gmail.nossr50.config.WorldBlacklist;
-import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.util.player.UserManager;
-import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.block.BlockState;
 import org.bukkit.event.EventHandler;
@@ -13,7 +10,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
-import org.bukkit.scheduler.BukkitRunnable;
 
 public class WorldListener implements Listener {
     private final mcMMO plugin;
@@ -33,7 +29,8 @@ public class WorldListener implements Listener {
         if(WorldBlacklist.isWorldBlacklisted(event.getWorld()))
             return;
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(mcMMO.p, () -> {
+        // Using 50 ms later as I do not know of a way to run one tick later (safely)
+        plugin.getFoliaLib().getImpl().runLater(() -> {
             for (BlockState blockState : event.getBlocks()) {
                 mcMMO.getPlaceStore().setFalse(blockState);
             }
